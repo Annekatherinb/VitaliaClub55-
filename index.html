@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vitalia — Activa tu vida</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root {
+  --bg:#FAF8F5;--bg2:#F0ECE4;--bg3:#E8E2D8;
+  --card:#FFFFFF;--text:#1A1714;--text2:#5C5751;--text3:#9C978F;
+  --accent:#2D6A4F;--accent2:#40916C;--accent-light:#D8F3DC;
+  --warm:#E07A2F;--warm-light:#FDE8D0;
+  --blue:#2C6BAD;--blue-light:#DBE9F8;
+  --purple:#6B4EAA;--purple-light:#EDE8F8;
+  --danger:#C0392B;--danger-light:#FDEDED;
+  --border:rgba(0,0,0,0.08);--shadow:0 2px 12px rgba(0,0,0,0.06);
+  --r:16px;--r-sm:10px;--fs:16px;
+}
+.large-text{--fs:19px}.xlarge-text{--fs:22px}
+.daltonico{--accent:#0066CC;--accent2:#3399FF;--accent-light:#CCE5FF;--warm:#CC6600;--warm-light:#FFE0B3}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:var(--fs);transition:font-size .3s;min-height:100vh}
+h1,h2,h3{font-family:'Playfair Display',serif;font-weight:500}
+a{color:var(--accent);text-decoration:none}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px}
+/* LAYOUT */
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 1.5rem;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;gap:1rem}
+.content{padding:1.75rem;flex:1}
+/* SIDEBAR */
+.sb-logo{padding:1.25rem 1.25rem .75rem;border-bottom:1px solid var(--border)}
+.logo-txt{font-family:'Playfair Display',serif;font-size:22px;color:var(--accent);font-weight:600}
+.logo-sub{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.sb-user{padding:.875rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer}
+.sb-user:hover{background:var(--bg)}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-light);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--accent);flex-shrink:0}
+.avatar.lg{width:56px;height:56px;font-size:18px}
+.user-name{font-size:13px;font-weight:500;line-height:1.2}
+.user-role{font-size:11px;color:var(--text3)}
+.sb-nav{flex:1;padding:.5rem 0}
+.nav-sec{padding:.5rem 1.25rem .2rem;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.nav-item{display:flex;align-items:center;gap:9px;padding:.55rem 1.25rem;cursor:pointer;color:var(--text2);font-size:13.5px;border-left:3px solid transparent;transition:all .15s;user-select:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent);font-weight:500}
+.nav-item i{font-size:17px}
+.nav-badge{margin-left:auto;background:var(--warm);color:white;border-radius:20px;font-size:10px;padding:1px 6px;font-weight:600}
+.sb-bottom{padding:.875rem 1.25rem;border-top:1px solid var(--border)}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:.45rem 1.1rem;border-radius:var(--r-sm);border:none;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:500;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:white}.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}.btn-outline:hover{background:var(--bg)}
+.btn-warm{background:var(--warm);color:white}
+.btn-danger{background:var(--danger-light);color:var(--danger);border:1px solid rgba(192,57,43,.2)}.btn-danger:hover{background:var(--danger);color:white}
+.btn-approve{background:var(--accent-light);color:var(--accent);border:none}.btn-approve:hover{background:var(--accent);color:white}
+.btn-sm{padding:.3rem .7rem;font-size:12.5px}
+.btn-lg{padding:.7rem 1.75rem;font-size:15px;border-radius:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+/* CARDS */
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:1.5rem}
+.card-sm{padding:1rem 1.25rem}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.flex-row{display:flex;gap:1.25rem;align-items:flex-start}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:500}
+.bg-green{background:var(--accent-light);color:var(--accent)}
+.bg-warm{background:var(--warm-light);color:var(--warm)}
+.bg-blue{background:var(--blue-light);color:var(--blue)}
+.bg-purple{background:var(--purple-light);color:var(--purple)}
+.bg-gray{background:var(--bg2);color:var(--text2)}
+.bg-danger{background:var(--danger-light);color:var(--danger)}
+/* FORMS */
+.form-group{margin-bottom:1.1rem}
+.form-label{display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:5px}
+.form-input{width:100%;padding:.55rem .875rem;border:1px solid var(--border);border-radius:var(--r-sm);font-family:inherit;font-size:inherit;background:var(--bg);color:var(--text);transition:border .15s}
+.form-input:focus{outline:none;border-color:var(--accent);background:var(--card)}
+select.form-input{cursor:pointer}
+textarea.form-input{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.check-group{display:flex;flex-wrap:wrap;gap:7px}
+.check-tag{padding:5px 13px;border-radius:20px;border:1px solid var(--border);font-size:13px;cursor:pointer;transition:all .15s;background:var(--bg);user-select:none}
+.check-tag:hover{border-color:var(--accent);color:var(--accent)}
+.check-tag.sel{background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:500}
+/* SEARCH */
+.search-wrap{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:.45rem .9rem;flex:1;max-width:380px}
+.search-wrap input{border:none;background:transparent;font-family:inherit;font-size:13.5px;color:var(--text);flex:1;outline:none}
+.search-wrap i{color:var(--text3);font-size:16px}
+.filter-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.1rem}
+.chip{padding:4px 13px;border-radius:20px;border:1px solid var(--border);font-size:13px;cursor:pointer;background:var(--card);color:var(--text2);transition:all .15s}
+.chip:hover,.chip.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);font-weight:500}
+/* STAT CARDS */
+.stat-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:1.1rem 1.25rem}
+.stat-num{font-size:30px;font-weight:600;font-family:'Playfair Display',serif}
+.stat-label{font-size:12.5px;color:var(--text3);margin-top:1px}
+.stat-delta{font-size:11.5px;margin-top:3px}
+.stat-delta.up{color:var(--accent)}.stat-delta.down{color:var(--danger)}
+/* ACTIVITY CARDS */
+.act-card{background:var(--card);border-radius:var(--r);border:1px solid var(--border);overflow:hidden;transition:transform .15s,box-shadow .15s;cursor:pointer}
+.act-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.act-img{height:110px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:42px}
+.act-body{padding:.875rem}
+.act-title{font-size:14px;font-weight:500;margin-bottom:3px;line-height:1.3}
+.act-meta{font-size:11.5px;color:var(--text3);display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.act-footer{padding:.65rem .875rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl th{text-align:left;padding:9px 12px;font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--border)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--bg)}
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dh{text-align:center;font-size:11px;color:var(--text3);padding:5px 0;font-weight:500}
+.cal-day{min-height:48px;background:var(--bg);border-radius:6px;padding:3px;font-size:11px;cursor:pointer;transition:background .1s}
+.cal-day:hover{background:var(--bg2)}
+.cal-day.today{background:var(--accent-light)}
+.cal-day.today .cal-num{color:var(--accent);font-weight:600}
+.cal-day.other{opacity:.35}
+.cal-ev{border-radius:3px;padding:1px 4px;font-size:9.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:white}
+.cal-ev.c0{background:var(--accent)}.cal-ev.c1{background:var(--warm)}.cal-ev.c2{background:var(--blue)}.cal-ev.c3{background:var(--purple)}
+/* MAP */
+#map-container{height:340px;border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
+/* PROGRESS */
+.progress-bar{height:7px;background:var(--bg2);border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;border-radius:20px;transition:width .5s ease}
+.pf-green{background:var(--accent)}.pf-warm{background:var(--warm)}.pf-blue{background:var(--blue)}.pf-purple{background:var(--purple)}
+/* TOGGLE */
+.toggle{width:42px;height:22px;background:var(--bg2);border-radius:11px;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';width:16px;height:16px;background:white;border-radius:50%;position:absolute;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{transform:translateX(20px)}
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;align-items:center;justify-content:center;padding:1rem}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border-radius:20px;padding:2rem;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-close{position:absolute;top:.875rem;right:.875rem;width:30px;height:30px;border-radius:50%;background:var(--bg2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:15px}
+/* TIMELINE */
+.timeline{padding-left:18px;position:relative}
+.timeline::before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--bg2)}
+.tl-item{position:relative;margin-bottom:1.1rem}
+.tl-dot{position:absolute;left:-16px;top:4px;width:9px;height:9px;border-radius:50%;border:2px solid var(--card)}
+.tl-dot.green{background:var(--accent)}.tl-dot.warm{background:var(--warm)}.tl-dot.blue{background:var(--blue)}
+/* NOTIF */
+.notif-item{display:flex;align-items:flex-start;gap:11px;padding:.875rem;border-radius:var(--r-sm);border:1px solid var(--border);margin-bottom:.65rem;transition:background .15s;cursor:pointer}
+.notif-item:hover{background:var(--bg2)}
+.notif-item.unread{border-left:3px solid var(--accent)}
+.notif-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+/* MISC */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem}
+.section-title{font-size:17px}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.25rem}
+.tab{padding:.65rem 1.1rem;font-size:13.5px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab:hover{color:var(--text)}.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+/* ONBOARDING */
+.ob-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:2rem}
+.ob-card{background:var(--card);border-radius:24px;padding:2.25rem;width:100%;max-width:560px;border:1px solid var(--border)}
+.step-dots{display:flex;gap:5px;margin-bottom:1.75rem}
+.step-dot{width:7px;height:7px;border-radius:20px;background:var(--bg2);transition:all .3s}
+.step-dot.active{width:22px;background:var(--accent)}
+.step-dot.done{background:var(--accent2)}
+/* AUTH */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#1A3D2B 0%,#2D6A4F 60%,#40916C 100%);padding:1rem}
+.auth-card{background:var(--card);border-radius:20px;padding:2.25rem;width:100%;max-width:420px}
+.auth-logo{text-align:center;margin-bottom:1.75rem}
+.auth-logo .logo-txt{font-size:28px;display:block;margin-bottom:4px}
+/* LANDING */
+.hero{background:linear-gradient(160deg,#1A3D2B 0%,#2D6A4F 60%,#40916C 100%);color:white;padding:5rem 2rem;text-align:center}
+.hero h1{font-size:52px;font-weight:600;line-height:1.1;margin-bottom:.875rem}
+.hero p{font-size:19px;opacity:.85;max-width:500px;margin:0 auto 2rem;line-height:1.6}
+.hero-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+.btn-white{background:white;color:var(--accent)}
+.btn-ghost{background:transparent;border:2px solid rgba(255,255,255,.6);color:white}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;padding:3.5rem 2rem;max-width:860px;margin:0 auto}
+.feat-card{text-align:center;padding:1.75rem 1.25rem;background:var(--card);border-radius:var(--r);border:1px solid var(--border)}
+.feat-icon{font-size:34px;margin-bottom:.875rem}
+.feat-title{font-size:16px;margin-bottom:.4rem}
+.feat-desc{font-size:13.5px;color:var(--text2);line-height:1.6}
+/* ALERTS */
+.alert{padding:.875rem 1rem;border-radius:var(--r-sm);margin-bottom:1rem;font-size:13.5px;display:flex;gap:9px;align-items:flex-start}
+.alert-info{background:var(--blue-light);color:var(--blue);border:1px solid rgba(44,107,173,.2)}
+.alert-warn{background:var(--warm-light);color:var(--warm);border:1px solid rgba(224,122,47,.2)}
+.alert-success{background:var(--accent-light);color:var(--accent);border:1px solid rgba(45,106,79,.2)}
+.alert-error{background:var(--danger-light);color:var(--danger);border:1px solid rgba(192,57,43,.2)}
+/* EMPTY */
+.empty{text-align:center;padding:3rem 2rem;color:var(--text3)}
+.empty i{font-size:44px;margin-bottom:1rem;display:block}
+.empty p{font-size:14px;margin-top:.4rem}
+/* SPINNER */
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;z-index:500;flex-direction:column;gap:12px}
+/* CHART */
+.chart-bars{display:flex;align-items:flex-end;gap:5px;height:90px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bar{width:100%;border-radius:3px 3px 0 0;background:var(--bg2);transition:height .5s;min-height:2px}
+.bar.filled{background:var(--accent)}
+.bar-lbl{font-size:10px;color:var(--text3)}
+/* TOAST */
+#toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--text);color:white;padding:.75rem 1.1rem;border-radius:var(--r-sm);font-size:13.5px;display:flex;align-items:center;gap:8px;animation:slide-in .3s ease;max-width:320px}
+.toast.success{background:var(--accent)}.toast.error{background:var(--danger)}.toast.warn{background:var(--warm)}
+@keyframes slide-in{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+/* FILTER PANEL */
+.filter-panel{background:var(--card);border-bottom:1px solid var(--border);padding:1rem 1.5rem;display:none}
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}.main{margin-left:0}
+  .grid-3,.grid-4{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:1fr}.hero h1{font-size:34px}
+  .flex-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<div id="toast-wrap"></div>
+
+<!-- ===== FIREBASE SETUP ===== -->
+<div id="s-fbsetup" style="display:none;min-height:100vh;background:linear-gradient(160deg,#1A3D2B 0%,#2D6A4F 60%,#40916C 100%);align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--card);border-radius:20px;padding:2.25rem;width:100%;max-width:500px">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--accent);font-weight:600;margin-bottom:4px">Vitalia</div>
+      <div style="font-size:13px;color:var(--text3)">Configuración inicial de Firebase</div>
+    </div>
+    <div class="alert alert-info" style="margin-bottom:1.25rem;font-size:12.5px">
+      <i class="ti ti-info-circle" style="font-size:15px;flex-shrink:0"></i>
+      <div>
+        Necesitas crear un proyecto Firebase gratuito:
+        <ol style="margin-top:6px;padding-left:16px;line-height:1.8">
+          <li>Ve a <a href="https://console.firebase.google.com" target="_blank" style="color:var(--blue)">console.firebase.google.com</a></li>
+          <li>Crea un proyecto → <strong>"vitalia-app"</strong></li>
+          <li>Habilita <strong>Authentication → Email/Password</strong></li>
+          <li>Crea <strong>Firestore Database</strong> (modo test)</li>
+          <li>Ve a Configuración del proyecto → Tus apps → Web → copia el config</li>
+        </ol>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">API Key *</label>
+      <input class="form-input" id="fb-apiKey" placeholder="AIzaSy...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Auth Domain *</label>
+      <input class="form-input" id="fb-authDomain" placeholder="mi-proyecto.firebaseapp.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Project ID *</label>
+      <input class="form-input" id="fb-projectId" placeholder="mi-proyecto-id">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Storage Bucket</label>
+      <input class="form-input" id="fb-storageBucket" placeholder="mi-proyecto.appspot.com">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Messaging Sender ID</label>
+        <input class="form-input" id="fb-messagingSenderId" placeholder="123456789">
+      </div>
+      <div class="form-group">
+        <label class="form-label">App ID</label>
+        <input class="form-input" id="fb-appId" placeholder="1:123...">
+      </div>
+    </div>
+    <div id="fb-setup-err" class="alert alert-error" style="display:none;margin-bottom:1rem"></div>
+    <div style="display:flex;flex-direction:column;gap:.65rem">
+      <button class="btn btn-primary btn-lg" style="justify-content:center" onclick="guardarFBConfig()">
+        <i class="ti ti-device-floppy"></i> Guardar configuración y continuar
+      </button>
+      <button class="btn btn-outline" style="justify-content:center;font-size:13px" onclick="pegarConfigJSON()">
+        <i class="ti ti-clipboard"></i> Pegar JSON completo del config
+      </button>
+    </div>
+    <p style="text-align:center;font-size:11.5px;color:var(--text3);margin-top:1rem">La configuración se guardará en tu navegador. Nadie más puede verla.</p>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading" class="loading-overlay">
+  <div class="spinner" style="width:36px;height:36px;border-width:3px"></div>
+  <p style="color:var(--text2);font-size:14px">Cargando Vitalia...</p>
+</div>
+
+<!-- ===== LANDING ===== -->
+<div id="s-landing" style="display:none">
+  <div class="hero">
+    <h1>Vitalia</h1>
+    <p>Conectamos adultos mayores con actividades, experiencias y comunidad hecha para ellos.</p>
+    <div class="hero-btns">
+      <button class="btn btn-white btn-lg" onclick="goTo('onboarding')">Comenzar gratis</button>
+      <button class="btn btn-ghost btn-lg" onclick="goTo('login')">Iniciar sesión</button>
+    </div>
+  </div>
+  <div class="features-grid">
+    <div class="feat-card"><div class="feat-icon">🎯</div><div class="feat-title">Personalizado para ti</div><div class="feat-desc">Actividades según tus gustos, salud y ubicación.</div></div>
+    <div class="feat-card"><div class="feat-icon">📅</div><div class="feat-title">Agenda sin conflictos</div><div class="feat-desc">Calendario que organiza tus reservas y te avisa.</div></div>
+    <div class="feat-card"><div class="feat-icon">🌿</div><div class="feat-title">Proveedores verificados</div><div class="feat-desc">Cada actividad es revisada antes de publicarse.</div></div>
+  </div>
+  <div style="text-align:center;padding:1.25rem;background:var(--card);border-top:1px solid var(--border)">
+    <span style="font-size:13px;color:var(--text3)">
+      ¿Ya tienes cuenta? <a href="#" onclick="goTo('login')">Inicia sesión</a> &nbsp;|&nbsp;
+      <a href="#" onclick="goTo('gobierno')">Portal Gobierno</a>
+    </span>
+  </div>
+</div>
+
+<!-- ===== LOGIN ===== -->
+<div id="s-login" style="display:none">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <span class="logo-txt">Vitalia</span>
+        <span style="font-size:13px;color:var(--text3)">Activa tu vida</span>
+      </div>
+      <div id="login-err" class="alert alert-error" style="display:none"></div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input class="form-input" id="l-email" type="email" placeholder="tucorreo@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <input class="form-input" id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-bottom:.875rem" id="btn-login" onclick="doLogin()">Iniciar sesión</button>
+      <p style="text-align:center;font-size:13px;color:var(--text3);margin-bottom:1.25rem">¿No tienes cuenta? <a href="#" onclick="goTo('onboarding')">Regístrate</a></p>
+      <hr style="border:none;border-top:1px solid var(--border);margin-bottom:1rem">
+      <p style="font-size:11.5px;color:var(--text3);text-align:center;margin-bottom:.75rem">Acceso demo rápido</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <button class="btn btn-outline btn-sm" style="justify-content:center" onclick="demoLogin('adulto')">👤 Adulto</button>
+        <button class="btn btn-outline btn-sm" style="justify-content:center" onclick="demoLogin('acompanante')">👥 Acompañante</button>
+        <button class="btn btn-outline btn-sm" style="justify-content:center" onclick="demoLogin('proveedor')">🏢 Proveedor</button>
+        <button class="btn btn-outline btn-sm" style="justify-content:center" onclick="demoLogin('admin')">🛡️ Admin</button>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);margin-top:1rem;margin-bottom:.75rem">
+      <p style="font-size:11.5px;color:var(--text3);text-align:center"><a href="#" onclick="limpiarFBConfig()" style="color:var(--text3)"><i class="ti ti-settings" style="font-size:11px"></i> Reconfigurar Firebase</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ONBOARDING ===== -->
+<div id="s-onboarding" style="display:none">
+  <div class="ob-wrap">
+    <div class="ob-card">
+      <div id="ob1">
+        <div class="step-dots"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+        <h2 style="margin-bottom:.4rem">¡Bienvenido a Vitalia!</h2>
+        <p style="color:var(--text2);margin-bottom:1.5rem;font-size:14.5px">Cuéntanos sobre ti para recomendarte las mejores actividades.</p>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Nombre completo *</label><input class="form-input" id="ob-nombre" placeholder="Tu nombre completo"></div>
+          <div class="form-group"><label class="form-label">Edad *</label><input class="form-input" id="ob-edad" type="number" min="55" max="100" placeholder="Ej: 67"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Correo electrónico *</label><input class="form-input" id="ob-email" type="email" placeholder="tucorreo@email.com"></div>
+        <div class="form-group"><label class="form-label">Contraseña *</label><input class="form-input" id="ob-pass" type="password" placeholder="Mínimo 6 caracteres"></div>
+        <div class="form-group">
+          <label class="form-label">Ciudad *</label>
+          <select class="form-input" id="ob-ciudad">
+            <option value="">Selecciona tu ciudad</option>
+            <option>Cali</option><option>Medellín</option><option>Bogotá</option>
+            <option>Barranquilla</option><option>Cartagena</option><option>Bucaramanga</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">¿Cómo te desplazas?</label>
+          <div class="check-group" id="ob-movilidad">
+            <span class="check-tag" data-v="vehiculo" onclick="tTag(this)">🚗 Vehículo</span>
+            <span class="check-tag" data-v="transporte_publico" onclick="tTag(this)">🚌 Bus</span>
+            <span class="check-tag" data-v="a_pie" onclick="tTag(this)">🚶 A pie</span>
+            <span class="check-tag" data-v="no_sale" onclick="tTag(this)">🏠 Prefiero casa</span>
+          </div>
+        </div>
+        <div id="ob1-err" class="alert alert-error" style="display:none"></div>
+        <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center" onclick="obStep(1,2)">Continuar →</button>
+      </div>
+
+      <div id="ob2" style="display:none">
+        <div class="step-dots"><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+        <h2 style="margin-bottom:.4rem">¿Qué te gusta hacer?</h2>
+        <p style="color:var(--text2);margin-bottom:1.25rem;font-size:14.5px">Selecciona todo lo que te interese.</p>
+        <div class="check-group" id="ob-gustos">
+          <span class="check-tag" data-v="arte" onclick="tTag(this)">🎨 Arte</span>
+          <span class="check-tag" data-v="bienestar" onclick="tTag(this)">🧘 Bienestar</span>
+          <span class="check-tag" data-v="musica" onclick="tTag(this)">🎵 Música</span>
+          <span class="check-tag" data-v="cocina" onclick="tTag(this)">🍳 Cocina</span>
+          <span class="check-tag" data-v="teatro" onclick="tTag(this)">🎭 Teatro</span>
+          <span class="check-tag" data-v="naturaleza" onclick="tTag(this)">🌿 Naturaleza</span>
+          <span class="check-tag" data-v="viajes" onclick="tTag(this)">✈️ Viajes</span>
+          <span class="check-tag" data-v="baile" onclick="tTag(this)">💃 Baile</span>
+          <span class="check-tag" data-v="lectura" onclick="tTag(this)">📚 Lectura</span>
+          <span class="check-tag" data-v="tecnologia" onclick="tTag(this)">💻 Tecnología</span>
+        </div>
+        <div style="display:flex;gap:.75rem;margin-top:1.5rem">
+          <button class="btn btn-outline" onclick="obStep(2,1)">← Atrás</button>
+          <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="obStep(2,3)">Continuar →</button>
+        </div>
+      </div>
+
+      <div id="ob3" style="display:none">
+        <div class="step-dots"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+        <h2 style="margin-bottom:.4rem">Tu salud importa</h2>
+        <p style="color:var(--text2);margin-bottom:1.25rem;font-size:14.5px">Esto nos ayuda a sugerirte actividades seguras para ti.</p>
+        <div class="form-group">
+          <label class="form-label">¿Tienes alguna limitación física?</label>
+          <div class="check-group" id="ob-lim">
+            <span class="check-tag" data-v="ninguna" onclick="tTag(this)">✅ Ninguna</span>
+            <span class="check-tag" data-v="movilidad_reducida" onclick="tTag(this)">🦵 Movilidad reducida</span>
+            <span class="check-tag" data-v="problemas_cardiacos" onclick="tTag(this)">❤️ Cardíacos</span>
+            <span class="check-tag" data-v="baja_vision" onclick="tTag(this)">👁️ Baja visión</span>
+            <span class="check-tag" data-v="hipoacusia" onclick="tTag(this)">👂 Hipoacusia</span>
+            <span class="check-tag" data-v="osteoporosis" onclick="tTag(this)">🦴 Osteoporosis</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">¿Consumes medicamentos regularmente?</label>
+          <select class="form-input" id="ob-med">
+            <option value="no">No consumo medicamentos</option>
+            <option value="presion">Sí, para presión arterial</option>
+            <option value="diabetes">Sí, para diabetes</option>
+            <option value="corazon">Sí, para el corazón</option>
+            <option value="otros">Sí, otros</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas de salud (opcional)</label>
+          <textarea class="form-input" id="ob-hist" placeholder="Diagnósticos, cirugías recientes, alergias..."></textarea>
+        </div>
+        <div style="display:flex;gap:.75rem">
+          <button class="btn btn-outline" onclick="obStep(3,2)">← Atrás</button>
+          <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="obStep(3,4)">Continuar →</button>
+        </div>
+      </div>
+
+      <div id="ob4" style="display:none">
+        <div class="step-dots"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div></div>
+        <h2 style="margin-bottom:.4rem">¿Tienes acompañante?</h2>
+        <p style="color:var(--text2);margin-bottom:1.25rem;font-size:14.5px">Un familiar puede hacer seguimiento de tus actividades.</p>
+        <div class="form-group"><label class="form-label">Nombre del acompañante</label><input class="form-input" id="ob-ac-n" placeholder="Nombre completo (opcional)"></div>
+        <div class="form-group"><label class="form-label">Correo del acompañante</label><input class="form-input" id="ob-ac-e" type="email" placeholder="correo@email.com (opcional)"></div>
+        <p style="font-size:12px;color:var(--text3);margin-bottom:1.25rem">Le enviaremos una invitación para acceder al perfil de seguimiento.</p>
+        <div style="display:flex;gap:.75rem">
+          <button class="btn btn-outline" onclick="obStep(4,3)">← Atrás</button>
+          <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="obFinal()">Crear cuenta →</button>
+        </div>
+      </div>
+
+      <div id="ob5" style="display:none">
+        <div class="step-dots"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div></div>
+        <div style="text-align:center;padding:1rem 0">
+          <div id="ob5-spin"><div class="spinner" style="width:40px;height:40px;border-width:3px;margin:0 auto 1rem"></div><p style="color:var(--text2)">Creando tu cuenta...</p></div>
+          <div id="ob5-ok" style="display:none">
+            <div style="font-size:56px;margin-bottom:.875rem">🎉</div>
+            <h2 style="margin-bottom:.65rem">¡Todo listo!</h2>
+            <p style="color:var(--text2);margin-bottom:1.5rem;font-size:14.5px;line-height:1.6">Tu perfil está configurado. Ya tenemos actividades recomendadas para ti.</p>
+            <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center" onclick="goTo('app')">Explorar Vitalia →</button>
+          </div>
+          <div id="ob5-err" class="alert alert-error" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="s-app" style="display:none">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sb-logo"><div class="logo-txt">Vitalia</div><div class="logo-sub">Activa tu vida</div></div>
+      <div class="sb-user" onclick="showPage('perfil')">
+        <div class="avatar" id="sb-av">?</div>
+        <div><div class="user-name" id="sb-name">—</div><div class="user-role" id="sb-role">—</div></div>
+      </div>
+      <nav class="sb-nav" id="sb-nav"></nav>
+      <div class="sb-bottom">
+        <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center" onclick="doLogout()"><i class="ti ti-logout"></i> Cerrar sesión</button>
+        <button class="btn btn-outline btn-sm" style="width:100%;justify-content:center;margin-top:6px;font-size:12px;opacity:.7" onclick="if(confirm('¿Reconfigurar Firebase? Se cerrará sesión y tendrás que ingresar nuevamente las credenciales.')){limpiarFBConfig()}"><i class="ti ti-settings"></i> Reconfigurar Firebase</button>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <h2 id="topbar-title" style="font-size:17px;font-family:'Playfair Display',serif;font-weight:500">Inicio</h2>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <div class="search-wrap" id="topbar-search" style="display:none">
+            <i class="ti ti-search"></i>
+            <input type="text" id="search-inp" placeholder="Buscar actividades..." oninput="applyFilters()">
+          </div>
+          <button class="btn btn-outline btn-sm" id="btn-filter" style="display:none" onclick="toggleFP()"><i class="ti ti-adjustments-horizontal"></i> Filtros</button>
+          <div style="position:relative;cursor:pointer" onclick="showPage('notificaciones')">
+            <i class="ti ti-bell" style="font-size:19px;color:var(--text2)"></i>
+            <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;background:var(--warm);border-radius:7px;font-size:9px;color:white;align-items:center;justify-content:center;padding:0 3px">0</span>
+          </div>
+          <div class="avatar" id="topbar-av" style="width:30px;height:30px;font-size:11px;cursor:pointer" onclick="showPage('perfil')">?</div>
+        </div>
+      </header>
+      <div class="filter-panel" id="filter-panel">
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:1;min-width:130px"><label class="form-label" style="font-size:12px">Categoría</label><select class="form-input" id="f-cat" onchange="applyFilters()" style="font-size:13px;padding:.35rem .7rem"><option value="">Todas</option></select></div>
+          <div style="flex:1;min-width:110px"><label class="form-label" style="font-size:12px">Precio</label><select class="form-input" id="f-precio" onchange="applyFilters()" style="font-size:13px;padding:.35rem .7rem"><option value="">Todos</option><option value="gratis">Solo gratuitas</option><option value="pago">Con costo</option></select></div>
+          <div style="flex:1;min-width:110px"><label class="form-label" style="font-size:12px">Dificultad</label><select class="form-input" id="f-dif" onchange="applyFilters()" style="font-size:13px;padding:.35rem .7rem"><option value="">Todas</option><option value="facil">Fácil</option><option value="medio">Medio</option><option value="intenso">Intenso</option></select></div>
+          <div style="flex:1;min-width:110px"><label class="form-label" style="font-size:12px">Tipo</label><select class="form-input" id="f-tipo" onchange="applyFilters()" style="font-size:13px;padding:.35rem .7rem"><option value="">Todos</option><option value="presencial">Presencial</option><option value="virtual">Virtual</option></select></div>
+          <button class="btn btn-outline btn-sm" onclick="clearFilters()"><i class="ti ti-x"></i> Limpiar</button>
+        </div>
+      </div>
+      <div class="content" id="content"></div>
+    </main>
+  </div>
+</div>
+
+<!-- ===== GOBIERNO ===== -->
+<div id="s-gobierno" style="display:none">
+  <div style="background:var(--card);padding:1rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem">
+    <div class="logo-txt" style="font-size:18px">Vitalia</div>
+    <span style="font-size:12px;color:var(--text3)">Portal de datos públicos</span>
+    <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="goTo('landing')">← Volver</button>
+  </div>
+  <div class="content" style="max-width:1000px;margin:0 auto">
+    <div class="alert alert-info" style="margin-bottom:1.5rem"><i class="ti ti-info-circle" style="font-size:15px;flex-shrink:0"></i>Portal público para entidades gubernamentales. No requiere inicio de sesión. Datos agregados y anonimizados.</div>
+    <h1 style="font-size:22px;margin-bottom:1.5rem">Indicadores de bienestar — Adultos mayores</h1>
+    <div class="grid-4" style="margin-bottom:1.5rem" id="gov-stats"></div>
+    <div class="flex-row" style="gap:1.25rem">
+      <div class="card" style="flex:1" id="gov-chart"></div>
+      <div class="card" style="flex:1" id="gov-cats"></div>
+    </div>
+    <div class="card" style="margin-top:1.25rem">
+      <h3 style="font-size:15px;margin-bottom:1rem">Reportes disponibles</h3>
+      <div class="grid-2" id="gov-reports"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, addDoc, updateDoc,
+  collection, query, where, orderBy, limit, getDocs,
+  onSnapshot, serverTimestamp, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+// ─── FIREBASE CONFIG ───────────────────────────────────────────────────────
+// La configuración se guarda en localStorage al usar el panel de setup.
+function loadFBConfig() {
+  try {
+    const saved = localStorage.getItem('vitalia_fb_config');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return null;
+}
+
+function isFBConfigured(cfg) {
+  return cfg && cfg.apiKey && !cfg.apiKey.startsWith('REEMPLAZA') && cfg.projectId && !cfg.projectId.startsWith('REEMPLAZA');
+}
+
+const FB_SAVED = loadFBConfig();
+const FB = FB_SAVED || {
+  apiKey:            "REEMPLAZA_API_KEY",
+  authDomain:        "REEMPLAZA.firebaseapp.com",
+  projectId:         "REEMPLAZA_PROJECT_ID",
+  storageBucket:     "REEMPLAZA.appspot.com",
+  messagingSenderId: "REEMPLAZA_SENDER_ID",
+  appId:             "REEMPLAZA_APP_ID"
+};
+// ───────────────────────────────────────────────────────────────────────────
+
+const app  = initializeApp(FB);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let CU   = null;   // current Firebase user
+let CUD  = null;   // current user Firestore data
+let ACTS = [];     // actividades cache
+let FILT = [];     // filtered actividades
+let MAP  = null;   // Leaflet instance
+let CAL_RES = [];  // calendar reservas
+let UNSUB = null;  // notificaciones listener
+let calYear, calMonth;
+
+// ─── DEMO SEED DATA ────────────────────────────────────────────────────────
+const SEED_ACTS = [
+  {titulo:'Taller de pintura en acuarela',descripcion:'Aprende técnicas básicas de acuarela. Materiales incluidos. Máximo 12 personas.',categoria_id:'arte',tipo:'presencial',dificultad:'facil',precio:0,direccion:'Centro Cultural de Cali, Cra. 5 #6-05',latitud:3.4516,longitud:-76.5320,cupo_maximo:12,imagen_emoji:'🎨',dias_semana:['Martes','Jueves'],hora:'09:00',duracion_min:120,tags:['gratuito']},
+  {titulo:'Yoga suave para adultos mayores',descripcion:'Sesión de yoga adaptado. Lleva ropa cómoda.',categoria_id:'bienestar',tipo:'presencial',dificultad:'facil',precio:0,direccion:'Parque del Amor, Cali',latitud:3.4425,longitud:-76.5423,cupo_maximo:20,imagen_emoji:'🧘',dias_semana:['Lunes','Miércoles','Viernes'],hora:'08:00',duracion_min:60,tags:['gratuito']},
+  {titulo:'Teatro comunitario — nivel básico',descripcion:'Taller de expresión teatral. Improvisación y habilidades sociales.',categoria_id:'teatro',tipo:'presencial',dificultad:'medio',precio:15000,direccion:'Teatro Municipal, Calle 25 #4-60',latitud:3.4530,longitud:-76.5310,cupo_maximo:15,imagen_emoji:'🎭',dias_semana:['Viernes'],hora:'15:00',duracion_min:90,tags:['pago_proveedor']},
+  {titulo:'Coro de voces adultas',descripcion:'Boleros, vallenatos y clásicos. No se necesita experiencia.',categoria_id:'musica',tipo:'presencial',dificultad:'facil',precio:0,direccion:'Casa de la Cultura, Av. 2N #24-39',latitud:3.4612,longitud:-76.5275,cupo_maximo:30,imagen_emoji:'🎵',dias_semana:['Lunes','Viernes'],hora:'10:00',duracion_min:75,tags:['gratuito']},
+  {titulo:'Cocina mediterránea saludable',descripcion:'Platos saludables. Incluye degustación.',categoria_id:'cocina',tipo:'presencial',dificultad:'medio',precio:25000,direccion:'Escuela Gastronómica, Cra. 9 #16-95',latitud:3.4580,longitud:-76.5350,cupo_maximo:10,imagen_emoji:'🍳',dias_semana:['Sábado'],hora:'11:00',duracion_min:150,tags:['pago_proveedor']},
+  {titulo:'Jardinería terapéutica',descripcion:'Conecta con la naturaleza. Beneficios cognitivos comprobados.',categoria_id:'naturaleza',tipo:'presencial',dificultad:'facil',precio:0,direccion:'Jardín Botánico de Cali, Av. 2 Oeste',latitud:3.4398,longitud:-76.5501,cupo_maximo:16,imagen_emoji:'🌿',dias_semana:['Miércoles'],hora:'09:00',duracion_min:90,tags:['gratuito']},
+  {titulo:'Baile de salón — nivel básico',descripcion:'Vals, tango y merengue. No necesitas pareja.',categoria_id:'baile',tipo:'presencial',dificultad:'medio',precio:20000,direccion:'Academia Ritmo, Cra. 66 #11-35',latitud:3.4465,longitud:-76.5180,cupo_maximo:18,imagen_emoji:'💃',dias_semana:['Martes','Jueves'],hora:'16:00',duracion_min:60,tags:['pago_proveedor']},
+  {titulo:'Club de lectura latinoamericana',descripcion:'Este mes: García Márquez. Café incluido.',categoria_id:'lectura',tipo:'presencial',dificultad:'facil',precio:0,direccion:'Biblioteca Departamental, Av. Roosevelt 26A-49',latitud:3.4350,longitud:-76.5280,cupo_maximo:25,imagen_emoji:'📚',dias_semana:['Sábado'],hora:'15:00',duracion_min:120,tags:['gratuito']},
+  {titulo:'Fotografía básica para adultos',descripcion:'Aprende a usar tu celular como cámara profesional.',categoria_id:'tecnologia',tipo:'presencial',dificultad:'facil',precio:10000,direccion:'Centro Cultural, Cra. 5 #6-05',latitud:3.4520,longitud:-76.5325,cupo_maximo:12,imagen_emoji:'📸',dias_semana:['Sábado'],hora:'10:00',duracion_min:120,tags:['pago_proveedor']},
+];
+
+const SEED_APPS = [
+  {nombre:'Lumosity',descripcion:'Juegos cognitivos para la mente',categoria_id:'tecnologia',url:'https://lumosity.com',calificacion:4.6,precio:'Gratis',icono:'🧩',activa:true},
+  {nombre:'Calm',descripcion:'Meditación y sonidos de naturaleza',categoria_id:'bienestar',url:'https://calm.com',calificacion:4.9,precio:'Gratis+',icono:'🧘',activa:true},
+  {nombre:'Spotify',descripcion:'Música, podcasts y audiolibros',categoria_id:'musica',url:'https://spotify.com',calificacion:4.7,precio:'Gratis+',icono:'🎵',activa:true},
+  {nombre:'Audible',descripcion:'Miles de audiolibros narrados',categoria_id:'lectura',url:'https://audible.com',calificacion:4.5,precio:'Suscripción',icono:'📚',activa:true},
+  {nombre:'Chess.com',descripcion:'Ajedrez en línea para todos los niveles',categoria_id:'tecnologia',url:'https://chess.com',calificacion:4.7,precio:'Gratis',icono:'♟️',activa:true},
+  {nombre:'YouTube',descripcion:'Videos, tutoriales y entretenimiento',categoria_id:'tecnologia',url:'https://youtube.com',calificacion:4.8,precio:'Gratis',icono:'▶️',activa:true},
+];
+
+// ─── AUTH LISTENER ─────────────────────────────────────────────────────────
+// Show setup screen if Firebase is not configured
+if (!isFBConfigured(FB_SAVED)) {
+  hide('loading');
+  const setupEl = document.getElementById('s-fbsetup');
+  if (setupEl) setupEl.style.display = 'flex';
+} else {
+  onAuthStateChanged(auth, async user => {
+    hide('loading');
+    if (!user) { goTo('landing'); return; }
+    CU = user;
+    try {
+      const snap = await getDoc(doc(db,'usuarios',user.uid));
+      if (!snap.exists()) { goTo('landing'); return; }
+      CUD = snap.data();
+      setupSidebar();
+      goTo('app');
+      const first = {adulto:'inicio',acompanante:'resumen-ac',proveedor:'dashboard-pr',admin:'dashboard-adm'};
+      showPage(first[CUD.rol] || 'inicio');
+      listenNotif();
+    } catch(e) {
+      console.warn('Firebase not configured — demo mode', e.message);
+      goTo('login');
+    }
+  });
+}
+
+// ─── AUTH ──────────────────────────────────────────────────────────────────
+window.doLogin = async () => {
+  const email = v('l-email'), pass = v('l-pass');
+  const err = el('login-err'), btn = el('btn-login');
+  if (!email||!pass) { showErr(err,'Completa todos los campos'); return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Entrando...';
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    const m = {
+      'auth/user-not-found':'Usuario no encontrado',
+      'auth/wrong-password':'Contraseña incorrecta',
+      'auth/invalid-credential':'Credenciales inválidas',
+      'auth/network-request-failed':'Sin conexión a internet',
+    };
+    showErr(err, m[e.code] || 'Error al iniciar sesión');
+    btn.disabled = false; btn.textContent = 'Iniciar sesión';
+  }
+};
+
+window.demoLogin = async rol => {
+  const acc = {
+    adulto:      {email:'adulto@vitalia.demo',      pass:'vitalia2024'},
+    acompanante: {email:'acompanante@vitalia.demo', pass:'vitalia2024'},
+    proveedor:   {email:'proveedor@vitalia.demo',   pass:'vitalia2024'},
+    admin:       {email:'admin@vitalia.demo',        pass:'vitalia2024'},
+  }[rol];
+  try {
+    await signInWithEmailAndPassword(auth, acc.email, acc.pass);
+  } catch(e) {
+    try {
+      await crearCuentaDemo(rol, acc);
+    } catch(e2) {
+      toast('Firebase no configurado. Reemplaza FB config con tus credenciales.', 'warn', 7000);
+      modoDemo(rol);
+    }
+  }
+};
+
+async function crearCuentaDemo(rol, acc) {
+  const nombres = {adulto:'Carlos Mendoza',acompanante:'Ana García',proveedor:'Centro Activo Cali',admin:'Administrador Vitalia'};
+  const cred = await createUserWithEmailAndPassword(auth, acc.email, acc.pass);
+  const uid = cred.user.uid;
+  await setDoc(doc(db,'usuarios',uid), {nombre:nombres[rol],email:acc.email,rol,activo:true,fecha_registro:serverTimestamp()});
+  if (rol==='adulto') {
+    await setDoc(doc(db,'perfiles_adulto',uid), {usuario_id:uid,ciudad:'Cali',edad:67,tiene_movilidad:true,tipo_movilidad:'vehiculo',consume_medicamentos:false,gustos:['arte','bienestar','teatro'],limitaciones:['ninguna']});
+    await setDoc(doc(db,'configuracion',uid), {tamano_letra:16,modo_daltonico:false,notif_activas:true});
+    await sembrarActividades(uid);
+  }
+  if (rol==='proveedor') {
+    await sembrarActividades(uid);
+  }
+  if (rol==='admin') {
+    await sembrarActividades('admin-seed');
+  }
+  await addNotif(uid,'bienvenida','¡Bienvenido a Vitalia!',`Hola ${nombres[rol].split(' ')[0]}, ya tienes actividades disponibles para ti.`);
+}
+
+async function sembrarActividades(provId) {
+  const snap = await getDocs(query(collection(db,'actividades'),limit(1)));
+  if (!snap.empty) return; // ya sembradas
+  for (const a of SEED_ACTS) {
+    await addDoc(collection(db,'actividades'), {
+      ...a, proveedor_id:provId, proveedor_nombre:'Centro Activo Cali',
+      estado:'aprobada', fecha_creacion:serverTimestamp()
+    });
+  }
+  const appsSnap = await getDocs(query(collection(db,'apps_recomendadas'),limit(1)));
+  if (appsSnap.empty) {
+    for (const ap of SEED_APPS) await addDoc(collection(db,'apps_recomendadas'), ap);
+  }
+}
+
+window.doLogout = async () => {
+  ACTS = []; FILT = [];
+  if (UNSUB) { UNSUB(); UNSUB = null; }
+  try { await signOut(auth); } catch(e) {}
+  goTo('landing');
+};
+
+// ─── ONBOARDING ────────────────────────────────────────────────────────────
+const OBD = {};
+window.obStep = (from, to) => {
+  if (from===1 && to===2) {
+    const n=v('ob-nombre'), e=v('ob-email'), p=v('ob-pass'), c=v('ob-ciudad');
+    const edad=parseInt(v('ob-edad')||'0');
+    const err=el('ob1-err');
+    if (!n||!e||!p||!c) { showErr(err,'Completa todos los campos obligatorios'); return; }
+    if (edad<55||edad>110) { showErr(err,'La edad mínima es 55 años'); return; }
+    if (p.length<6) { showErr(err,'La contraseña necesita al menos 6 caracteres'); return; }
+    err.style.display='none';
+    OBD.nombre=n; OBD.edad=edad; OBD.email=e; OBD.pass=p; OBD.ciudad=c;
+    OBD.movilidad=selTags('#ob-movilidad');
+  }
+  if (from===2 && to===3) OBD.gustos=selTags('#ob-gustos');
+  if (from===3 && to===4) {
+    OBD.limitaciones=selTags('#ob-lim');
+    OBD.medicamentos=v('ob-med');
+    OBD.historial=v('ob-hist');
+  }
+  hide('ob'+from); show('ob'+to);
+};
+
+window.obFinal = async () => {
+  OBD.ac_nombre=v('ob-ac-n'); OBD.ac_email=v('ob-ac-e');
+  hide('ob4'); show('ob5');
+  el('ob5-spin').style.display='block'; el('ob5-ok').style.display='none'; el('ob5-err').style.display='none';
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, OBD.email, OBD.pass);
+    const uid = cred.user.uid;
+    await setDoc(doc(db,'usuarios',uid), {nombre:OBD.nombre,email:OBD.email,rol:'adulto',activo:true,fecha_registro:serverTimestamp()});
+    await setDoc(doc(db,'perfiles_adulto',uid), {usuario_id:uid,edad:OBD.edad,ciudad:OBD.ciudad,tiene_movilidad:!OBD.movilidad.includes('no_sale'),tipo_movilidad:OBD.movilidad[0]||'',consume_medicamentos:OBD.medicamentos!=='no',medicamentos:OBD.medicamentos,historial_clinico:OBD.historial,gustos:OBD.gustos,limitaciones:OBD.limitaciones});
+    await setDoc(doc(db,'configuracion',uid), {tamano_letra:16,modo_daltonico:false,notif_activas:true,idioma:'es'});
+    await sembrarActividades(uid);
+    await addNotif(uid,'bienvenida','¡Bienvenido a Vitalia!',`Hola ${OBD.nombre.split(' ')[0]}, ya tienes actividades recomendadas para ti.`);
+    el('ob5-spin').style.display='none'; el('ob5-ok').style.display='block';
+  } catch(e) {
+    el('ob5-spin').style.display='none';
+    const m={'auth/email-already-in-use':'Este correo ya está registrado','auth/weak-password':'Contraseña demasiado débil'};
+    showErr(el('ob5-err'), m[e.code]||'Error: '+e.message);
+  }
+};
+
+// ─── SIDEBAR ───────────────────────────────────────────────────────────────
+function setupSidebar() {
+  if (!CUD) return;
+  const rol=CUD.rol, nom=CUD.nombre||'Usuario';
+  const ini=nom.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  el('sb-name').textContent=nom; el('sb-av').textContent=ini; el('topbar-av').textContent=ini;
+  el('sb-role').textContent={adulto:'Adulto Mayor',acompanante:'Acompañante',proveedor:'Proveedor',admin:'Administrador'}[rol]||rol;
+  const NAVS={
+    adulto:[
+      {s:'Principal'},
+      {id:'inicio',ico:'ti-home',lbl:'Inicio'},
+      {id:'actividades',ico:'ti-compass',lbl:'Actividades'},
+      {id:'apps',ico:'ti-device-mobile',lbl:'Apps recomendadas'},
+      {id:'calendario',ico:'ti-calendar',lbl:'Mi calendario'},
+      {id:'mapa',ico:'ti-map-pin',lbl:'Mapa cercano'},
+      {s:'Personal'},
+      {id:'progreso',ico:'ti-chart-line',lbl:'Mi progreso'},
+      {id:'notificaciones',ico:'ti-bell',lbl:'Notificaciones',nb:true},
+      {id:'perfil',ico:'ti-user',lbl:'Mi perfil'},
+      {id:'configuracion',ico:'ti-settings',lbl:'Configuración'},
+    ],
+    acompanante:[
+      {s:'Seguimiento'},
+      {id:'resumen-ac',ico:'ti-layout-dashboard',lbl:'Resumen'},
+      {id:'historial',ico:'ti-history',lbl:'Historial'},
+      {id:'estadisticas-ac',ico:'ti-chart-bar',lbl:'Estadísticas'},
+      {id:'notificaciones',ico:'ti-bell',lbl:'Notificaciones',nb:true},
+    ],
+    proveedor:[
+      {s:'Mis publicaciones'},
+      {id:'dashboard-pr',ico:'ti-layout-dashboard',lbl:'Dashboard'},
+      {id:'mis-actividades',ico:'ti-calendar-event',lbl:'Actividades'},
+      {id:'nueva-actividad',ico:'ti-plus',lbl:'Nueva actividad'},
+      {id:'reservas-pr',ico:'ti-users',lbl:'Reservas'},
+    ],
+    admin:[
+      {s:'Administración'},
+      {id:'dashboard-adm',ico:'ti-layout-dashboard',lbl:'Dashboard'},
+      {id:'revisar',ico:'ti-shield-check',lbl:'Revisión pendiente',nb:true},
+      {id:'proveedores-adm',ico:'ti-building',lbl:'Proveedores'},
+      {id:'usuarios-adm',ico:'ti-users',lbl:'Usuarios'},
+    ],
+  };
+  el('sb-nav').innerHTML=(NAVS[rol]||[]).map(it=>it.s
+    ? `<div class="nav-sec">${it.s}</div>`
+    : `<div class="nav-item" data-p="${it.id}" onclick="showPage('${it.id}')"><i class="ti ${it.ico}"></i>${it.lbl}${it.nb?`<span class="nav-badge" id="nb-${it.id}" style="display:none">0</span>`:''}</div>`
+  ).join('');
+}
+
+// ─── PAGE ROUTER ───────────────────────────────────────────────────────────
+window.showPage = async pid => {
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.p===pid));
+  const TITLES={inicio:'Inicio',actividades:'Actividades',apps:'Apps recomendadas',calendario:'Mi calendario',mapa:'Mapa cercano',progreso:'Mi progreso',notificaciones:'Notificaciones',perfil:'Mi perfil',configuracion:'Configuración','resumen-ac':'Seguimiento',historial:'Historial','estadisticas-ac':'Estadísticas','dashboard-pr':'Dashboard','mis-actividades':'Mis actividades','nueva-actividad':'Nueva actividad','reservas-pr':'Reservas','dashboard-adm':'Dashboard',revisar:'Revisión pendiente','proveedores-adm':'Proveedores','usuarios-adm':'Usuarios'};
+  el('topbar-title').textContent=TITLES[pid]||pid;
+  const withSearch=['actividades','mapa'];
+  el('topbar-search').style.display=withSearch.includes(pid)?'flex':'none';
+  el('btn-filter').style.display=withSearch.includes(pid)?'flex':'none';
+  if (!withSearch.includes(pid)) el('filter-panel').style.display='none';
+  const C=el('content');
+  C.innerHTML='<div class="empty"><div class="spinner" style="margin:0 auto 10px"></div></div>';
+  const PAGES={
+    inicio:pInicio, actividades:pActividades, apps:pApps, calendario:pCalendario,
+    mapa:pMapa, progreso:pProgreso, notificaciones:pNotificaciones, perfil:pPerfil, configuracion:pConfiguracion,
+    'resumen-ac':pResumenAc, historial:pHistorial, 'estadisticas-ac':pEstadAc,
+    'dashboard-pr':pDashPr, 'mis-actividades':pDashPr, 'nueva-actividad':pNuevaAct, 'reservas-pr':pReservasPr,
+    'dashboard-adm':pDashAdm, revisar:pRevisar, 'proveedores-adm':pProvsAdm, 'usuarios-adm':pUsuariosAdm,
+  };
+  if (PAGES[pid]) await PAGES[pid](C);
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// PÁGINAS — ADULTO
+// ══════════════════════════════════════════════════════════════════════════
+
+async function pInicio(C) {
+  const uid=CU.uid;
+  let rCount=0, aMes=0;
+  try {
+    const snap=await getDocs(query(collection(db,'reservas'),where('adulto_id','==',uid),where('estado','in',['confirmada','pendiente'])));
+    rCount=snap.size;
+    const now=new Date();
+    aMes=snap.docs.filter(d=>{const ts=d.data().fecha_reserva; if(!ts) return false; const fd=ts.toDate?ts.toDate():new Date(ts); return fd.getMonth()===now.getMonth()&&fd.getFullYear()===now.getFullYear();}).length;
+  } catch(e){}
+  const acts=await getActs();
+  const rec=acts.slice(0,4);
+  const prox=await getProxReservas(uid,4);
+  C.innerHTML=`
+    <div style="margin-bottom:1.25rem">
+      <h1 style="font-size:24px;margin-bottom:3px">Buenos días, ${(CUD.nombre||'').split(' ')[0]} 👋</h1>
+      <p style="color:var(--text2)">Aquí está tu resumen de hoy</p>
+    </div>
+    <div class="grid-4" style="margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-num">${aMes}</div><div class="stat-label">Reservas este mes</div></div>
+      <div class="stat-card"><div class="stat-num">${rCount}</div><div class="stat-label">Reservas activas</div></div>
+      <div class="stat-card"><div class="stat-num">${acts.length}</div><div class="stat-label">Actividades disponibles</div></div>
+      <div class="stat-card"><div class="stat-num">🌟</div><div class="stat-label">¡Sigue activo!</div></div>
+    </div>
+    <div class="flex-row" style="gap:1.5rem">
+      <div style="flex:2">
+        <div class="section-hdr"><h2 class="section-title">Recomendadas para ti</h2><button class="btn btn-outline btn-sm" onclick="showPage('actividades')">Ver todas</button></div>
+        <div class="grid-2" id="rec-grid"></div>
+      </div>
+      <div style="flex:1">
+        <h2 class="section-title" style="margin-bottom:.875rem">Próximas reservas</h2>
+        <div class="card card-sm">
+          ${prox.length===0
+            ? '<div class="empty" style="padding:1.25rem"><i class="ti ti-calendar" style="font-size:28px"></i><p>Sin reservas próximas</p></div>'
+            : prox.map((r,i)=>`<div style="display:flex;gap:10px;margin-bottom:.75rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)">
+                <div style="background:${['var(--accent-light)','var(--warm-light)','var(--blue-light)','var(--purple-light)'][i%4]};color:${['var(--accent)','var(--warm)','var(--blue)','var(--purple)'][i%4]};border-radius:7px;padding:5px 8px;text-align:center;font-size:11px;font-weight:500;flex-shrink:0;min-width:50px">${fCorta(r.fecha_reserva)}</div>
+                <div><div style="font-size:13px;font-weight:500">${r.actividad_titulo||'Actividad'}</div><div style="font-size:11.5px;color:var(--text3)">${r.hora||''}</div></div>
+              </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  const grid=el('rec-grid'); rec.forEach(a=>grid.appendChild(actCard(a)));
+}
+
+async function pActividades(C) {
+  const acts=await getActs(); FILT=[...acts]; await poblarFiltros();
+  C.innerHTML=`
+    <div class="section-hdr" style="margin-bottom:.875rem">
+      <h1 style="font-size:22px">Explorar actividades</h1>
+      <span id="acts-count" style="color:var(--text3);font-size:13px">${acts.length} actividades</span>
+    </div>
+    <div class="filter-chips" id="cat-chips">
+      <span class="chip active" data-cat="" onclick="chipCat(this,'')">Todas</span>
+    </div>
+    <div class="grid-3" id="acts-grid"></div>`;
+  const catMap={arte:'🎨 Arte',bienestar:'🧘 Bienestar',musica:'🎵 Música',cocina:'🍳 Cocina',teatro:'🎭 Teatro',naturaleza:'🌿 Naturaleza',viajes:'✈️ Viajes',baile:'💃 Baile',lectura:'📚 Lectura',tecnologia:'💻 Tecnología'};
+  const cats=[...new Set(ACTS.map(a=>a.categoria_id).filter(Boolean))];
+  const chips=el('cat-chips');
+  cats.forEach(c=>{const s=document.createElement('span');s.className='chip';s.dataset.cat=c;s.textContent=catMap[c]||c;s.onclick=()=>chipCat(s,c);chips.appendChild(s);});
+  renderGrid(FILT);
+}
+
+window.chipCat=(chip,cat)=>{
+  document.querySelectorAll('#cat-chips .chip').forEach(c=>c.classList.remove('active'));
+  chip.classList.add('active');
+  el('f-cat').value=cat; applyFilters();
+};
+
+function renderGrid(list) {
+  const grid=el('acts-grid'); const cnt=el('acts-count');
+  if (!grid) return;
+  if (cnt) cnt.textContent=`${list.length} actividad${list.length!==1?'es':''}`;
+  grid.innerHTML='';
+  if (!list.length) { grid.innerHTML='<div class="empty" style="grid-column:1/-1;padding:3rem"><i class="ti ti-search" style="font-size:38px"></i><h3 style="margin:.875rem 0 .4rem">Sin resultados</h3><p>Intenta con otros filtros</p></div>'; return; }
+  list.forEach(a=>grid.appendChild(actCard(a)));
+}
+
+window.applyFilters=()=>{
+  const s=(el('search-inp')?.value||'').toLowerCase();
+  const cat=el('f-cat')?.value||'';
+  const pr=el('f-precio')?.value||'';
+  const df=el('f-dif')?.value||'';
+  const tp=el('f-tipo')?.value||'';
+  FILT=ACTS.filter(a=>{
+    if (cat&&a.categoria_id!==cat) return false;
+    if (pr==='gratis'&&a.precio>0) return false;
+    if (pr==='pago'&&a.precio===0) return false;
+    if (df&&a.dificultad!==df) return false;
+    if (tp&&a.tipo!==tp) return false;
+    if (s&&!a.titulo.toLowerCase().includes(s)&&!(a.descripcion||'').toLowerCase().includes(s)) return false;
+    return true;
+  });
+  renderGrid(FILT);
+};
+
+window.clearFilters=()=>{
+  ['f-cat','f-precio','f-dif','f-tipo'].forEach(id=>{const e=el(id);if(e)e.value='';});
+  const si=el('search-inp'); if(si)si.value='';
+  document.querySelectorAll('#cat-chips .chip').forEach((c,i)=>c.classList.toggle('active',i===0));
+  FILT=[...ACTS]; renderGrid(FILT);
+};
+
+window.toggleFP=()=>{const p=el('filter-panel');p.style.display=p.style.display==='block'?'none':'block';};
+
+async function pApps(C) {
+  let apps=[];
+  try { const snap=await getDocs(collection(db,'apps_recomendadas')); apps=snap.docs.map(d=>({id:d.id,...d.data()})); }
+  catch(e){ apps=SEED_APPS; }
+  C.innerHTML=`
+    <div style="margin-bottom:1.25rem">
+      <h1 style="font-size:22px;margin-bottom:3px">Apps recomendadas</h1>
+      <p style="color:var(--text2);font-size:13.5px">Entretenimiento desde casa. Si quieres instalar, te llevamos al sitio oficial.</p>
+    </div>
+    <div class="grid-2" id="apps-grid"></div>`;
+  const grid=el('apps-grid');
+  apps.filter(a=>a.activa!==false).forEach(a=>{
+    const d=document.createElement('div');
+    d.style.cssText='background:var(--card);border-radius:var(--r);border:1px solid var(--border);padding:1rem;display:flex;gap:12px;align-items:center';
+    d.innerHTML=`<div style="width:52px;height:52px;border-radius:12px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">${a.icono||'📱'}</div>
+      <div style="flex:1"><div style="font-weight:500;font-size:14px">${a.nombre}</div><div style="font-size:12.5px;color:var(--text2);margin:2px 0 5px">${a.descripcion}</div><div style="display:flex;gap:8px;align-items:center"><span style="color:#F59E0B;font-size:12px">⭐ ${a.calificacion}</span><span class="badge bg-gray">${a.precio}</span></div></div>
+      <a href="${a.url}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Ver →</a>`;
+    grid.appendChild(d);
+  });
+}
+
+async function pCalendario(C) {
+  const uid=CU.uid; let reservas=[];
+  try {
+    const snap=await getDocs(query(collection(db,'reservas'),where('adulto_id','==',uid),where('estado','in',['confirmada','pendiente'])));
+    reservas=snap.docs.map(d=>({id:d.id,...d.data()})); CAL_RES=reservas;
+  } catch(e){ CAL_RES=[]; }
+  const now=new Date(); calYear=now.getFullYear(); calMonth=now.getMonth();
+  C.innerHTML=`
+    <div class="section-hdr" style="margin-bottom:1.25rem">
+      <h1 style="font-size:22px">Mi calendario</h1>
+      <button class="btn btn-primary btn-sm" onclick="showPage('actividades')"><i class="ti ti-plus"></i> Reservar actividad</button>
+    </div>
+    <div class="flex-row" style="gap:1.5rem">
+      <div style="flex:2">
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+            <button class="btn btn-outline btn-sm" onclick="navCal(-1)"><i class="ti ti-chevron-left"></i></button>
+            <strong id="cal-title"></strong>
+            <button class="btn btn-outline btn-sm" onclick="navCal(1)"><i class="ti ti-chevron-right"></i></button>
+          </div>
+          <div id="cal-grid"></div>
+          <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px"><div style="width:11px;height:11px;background:var(--accent);border-radius:3px"></div>Actividad 1</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px"><div style="width:11px;height:11px;background:var(--warm);border-radius:3px"></div>Actividad 2</div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px"><div style="width:11px;height:11px;background:var(--blue);border-radius:3px"></div>Actividad 3</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1">
+        <h3 style="font-size:14.5px;color:var(--text2);margin-bottom:.875rem">Tus reservas</h3>
+        <div id="res-list"></div>
+      </div>
+    </div>`;
+  renderCal(calYear,calMonth); renderResList(reservas);
+}
+
+window.navCal=(d)=>{ calMonth+=d; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCal(calYear,calMonth); };
+
+function renderCal(y,m) {
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const DIAS=['D','L','M','M','J','V','S'];
+  el('cal-title').textContent=`${MESES[m]} ${y}`;
+  const fd=new Date(y,m,1).getDay(), dm=new Date(y,m+1,0).getDate();
+  const today=new Date();
+  const evMap={};
+  (CAL_RES||[]).forEach((r,i)=>{
+    const ts=r.fecha_reserva; if(!ts) return;
+    const d=ts.toDate?ts.toDate():new Date(ts);
+    if (d.getFullYear()===y&&d.getMonth()===m){ const k=d.getDate(); if(!evMap[k])evMap[k]=[]; evMap[k].push({t:r.actividad_titulo||'Actividad',c:i%4}); }
+  });
+  let h=`<div class="cal-grid">${DIAS.map(d=>`<div class="cal-dh">${d}</div>`).join('')}`;
+  for(let i=0;i<fd;i++) h+=`<div class="cal-day other"></div>`;
+  for(let d=1;d<=dm;d++){
+    const isT=today.getDate()===d&&today.getMonth()===m&&today.getFullYear()===y;
+    const evs=evMap[d]||[];
+    h+=`<div class="cal-day${isT?' today':''}"><span class="cal-num">${d}</span>`;
+    evs.slice(0,2).forEach(e=>h+=`<div class="cal-ev c${e.c}">${e.t.slice(0,9)}</div>`);
+    if(evs.length>2)h+=`<div class="cal-ev c3">+${evs.length-2}</div>`;
+    h+=`</div>`;
+  }
+  h+=`</div>`;
+  el('cal-grid').innerHTML=h;
+}
+
+function renderResList(res) {
+  const E=el('res-list'); if(!E)return;
+  if (!res.length){ E.innerHTML='<div class="empty" style="padding:1.5rem"><i class="ti ti-calendar" style="font-size:28px"></i><p>Sin reservas activas</p></div>'; return; }
+  const cols=[['var(--accent-light)','var(--accent)'],['var(--warm-light)','var(--warm)'],['var(--blue-light)','var(--blue)'],['var(--purple-light)','var(--purple)']];
+  E.innerHTML=[...res].sort((a,b)=>{
+    const fa=a.fecha_reserva?.toDate?a.fecha_reserva.toDate():new Date(a.fecha_reserva||0);
+    const fb=b.fecha_reserva?.toDate?b.fecha_reserva.toDate():new Date(b.fecha_reserva||0);
+    return fa-fb;
+  }).map((r,i)=>`
+    <div style="display:flex;gap:10px;margin-bottom:.75rem;padding:.875rem;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border)">
+      <div style="background:${cols[i%4][0]};color:${cols[i%4][1]};border-radius:7px;padding:5px 8px;text-align:center;font-size:11px;font-weight:500;flex-shrink:0;min-width:50px">${fCorta(r.fecha_reserva)}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${r.actividad_titulo||'Actividad'}</div><div style="font-size:11.5px;color:var(--text3)">${r.direccion||''}</div></div>
+      <button class="btn btn-danger btn-sm" onclick="cancelarRes('${r.id}')"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+}
+
+window.cancelarRes=async id=>{
+  if(!confirm('¿Cancelar esta reserva?'))return;
+  try{ await updateDoc(doc(db,'reservas',id),{estado:'cancelada'}); toast('Reserva cancelada','success'); showPage('calendario'); }
+  catch(e){ toast('Error al cancelar','error'); }
+};
+
+async function pMapa(C) {
+  const acts=await getActs();
+  C.innerHTML=`
+    <div style="margin-bottom:1rem">
+      <h1 style="font-size:22px;margin-bottom:3px">Actividades cerca de ti</h1>
+      <p style="color:var(--text2);font-size:13.5px">Cali, Valle del Cauca</p>
+    </div>
+    <div class="search-wrap" style="margin-bottom:1rem;max-width:100%">
+      <i class="ti ti-search"></i>
+      <input type="text" placeholder="Buscar en el mapa..." oninput="filtrarMapa(this.value,${JSON.stringify(acts).replace(/"/g,'&quot;')})">
+    </div>
+    <div id="map-container" style="height:340px;margin-bottom:1.25rem"></div>
+    <h3 style="font-size:15px;margin-bottom:.875rem">Lista de lugares</h3>
+    <div class="grid-2" id="ubic-grid"></div>`;
+  setTimeout(()=>{
+    const mapEl=el('map-container');
+    if(!mapEl||!window.L)return;
+    if(MAP){MAP.remove();MAP=null;}
+    MAP=L.map('map-container').setView([3.4516,-76.5320],13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(MAP);
+    const COLS=['#2D6A4F','#E07A2F','#2C6BAD','#6B4EAA'];
+    acts.forEach((a,i)=>{
+      if(!a.latitud||!a.longitud)return;
+      const ico=L.divIcon({className:'',html:`<div style="width:30px;height:30px;background:${COLS[i%4]};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);font-size:13px">${a.imagen_emoji||'📍'}</span></div>`,iconSize:[30,30],iconAnchor:[15,30]});
+      L.marker([a.latitud,a.longitud],{icon:ico}).addTo(MAP)
+        .bindPopup(`<b>${a.titulo}</b><br><small>${a.direccion||''}</small><br><small>${a.precio===0?'<b style="color:#2D6A4F">Gratuito</b>':'$'+a.precio.toLocaleString()+' COP'}</small><br><button onclick="window.openActModal('${a.id}')" style="margin-top:4px;padding:3px 8px;background:#2D6A4F;color:white;border:none;border-radius:5px;cursor:pointer;font-size:11px">Ver y reservar</button>`);
+    });
+    const grid=el('ubic-grid');
+    if(grid) acts.forEach(a=>{
+      const d=document.createElement('div');
+      d.style.cssText='background:var(--card);border-radius:var(--r-sm);border:1px solid var(--border);padding:.875rem;display:flex;gap:11px;align-items:center;cursor:pointer';
+      d.innerHTML=`<span style="font-size:26px">${a.imagen_emoji||'📍'}</span><div style="flex:1"><div style="font-weight:500;font-size:13.5px">${a.titulo}</div><div style="font-size:11.5px;color:var(--text3);margin-top:2px">${a.direccion||''}</div><div style="font-size:11.5px;color:var(--text3)">${(a.dias_semana||[]).join(', ')||a.horario||''} ${a.hora||''}</div></div><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openActModal('${a.id}')">Ver</button>`;
+      d.onclick=()=>{ if(a.latitud&&a.longitud)MAP.setView([a.latitud,a.longitud],15); };
+      grid.appendChild(d);
+    });
+  },120);
+}
+
+async function pProgreso(C) {
+  const uid=CU.uid; let reservas=[];
+  try{ const snap=await getDocs(query(collection(db,'reservas'),where('adulto_id','==',uid))); reservas=snap.docs.map(d=>d.data()); }catch(e){}
+  const total=reservas.length, asist=reservas.filter(r=>r.estado==='asistida').length;
+  const pct=total>0?Math.round(asist/total*100):0;
+  const catC={};
+  reservas.forEach(r=>{if(r.categoria_id)catC[r.categoria_id]=(catC[r.categoria_id]||0)+1;});
+  const topC=Object.entries(catC).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxC=topC[0]?.[1]||1;
+  const catMap={arte:'🎨 Arte',bienestar:'🧘 Bienestar',musica:'🎵 Música',cocina:'🍳 Cocina',teatro:'🎭 Teatro',naturaleza:'🌿 Naturaleza',viajes:'✈️ Viajes',baile:'💃 Baile',lectura:'📚 Lectura'};
+  const pfColors=['pf-green','pf-warm','pf-blue','pf-purple'];
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Mi progreso</h1>
+    <div class="grid-4" style="margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Reservas totales</div></div>
+      <div class="stat-card"><div class="stat-num">${asist}</div><div class="stat-label">Actividades asistidas</div></div>
+      <div class="stat-card"><div class="stat-num">${pct}%</div><div class="stat-label">% Asistencia</div><div class="stat-delta ${pct>=70?'up':'down'}">${pct>=70?'↑ Excelente':'Sigue intentando'}</div></div>
+      <div class="stat-card"><div class="stat-num">${topC.length}</div><div class="stat-label">Categorías exploradas</div></div>
+    </div>
+    <div class="flex-row" style="gap:1.25rem">
+      <div class="card" style="flex:1">
+        <h3 style="font-size:15px;margin-bottom:1rem">Categorías favoritas</h3>
+        ${topC.length===0?'<p style="color:var(--text3);font-size:13.5px">Aún sin actividades registradas</p>':
+          topC.map(([cat,n],i)=>`<div style="margin-bottom:.875rem">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${catMap[cat]||cat}</span><span style="color:var(--text3)">${n} ${n===1?'vez':'veces'}</span></div>
+            <div class="progress-bar"><div class="progress-fill ${pfColors[i%4]}" style="width:${Math.round(n/maxC*100)}%"></div></div>
+          </div>`).join('')}
+      </div>
+      <div class="card" style="flex:1">
+        <h3 style="font-size:15px;margin-bottom:1rem">Detalle</h3>
+        <div style="display:flex;flex-direction:column;gap:.75rem">
+          <div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Total reservas</span><strong>${total}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Asistidas</span><strong style="color:var(--accent)">${asist}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Canceladas</span><strong style="color:var(--danger)">${reservas.filter(r=>r.estado==='cancelada').length}</strong></div>
+          <div style="display:flex;justify-content:space-between;font-size:13.5px"><span>Pendientes</span><strong style="color:var(--warm)">${reservas.filter(r=>r.estado==='pendiente').length}</strong></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function pNotificaciones(C) {
+  const uid=CU.uid; let notifs=[];
+  try{
+    const q=query(collection(db,'notificaciones'),where('usuario_id','==',uid),orderBy('fecha','desc'),limit(40));
+    const snap=await getDocs(q); notifs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    snap.docs.filter(d=>!d.data().leida).forEach(d=>updateDoc(doc(db,'notificaciones',d.id),{leida:true}).catch(()=>{}));
+  }catch(e){}
+  const icoMap={bienvenida:'ti-star',reserva:'ti-calendar',recordatorio:'ti-bell',recomendacion:'ti-heart',actividad:'ti-compass'};
+  const colMap={bienvenida:'bg-green',reserva:'bg-blue',recordatorio:'bg-warm',recomendacion:'bg-purple',actividad:'bg-green'};
+  C.innerHTML=`
+    <div class="section-hdr" style="margin-bottom:1.25rem">
+      <h1 style="font-size:22px">Notificaciones</h1>
+      ${notifs.length>0?`<button class="btn btn-outline btn-sm" onclick="marcarLeidas()">Marcar todas leídas</button>`:''}
+    </div>
+    ${notifs.length===0?`<div class="empty"><i class="ti ti-bell" style="font-size:42px"></i><h3 style="margin:.875rem 0 .4rem">Sin notificaciones</h3><p>Aquí aparecerán tus avisos</p></div>`:
+      notifs.map(n=>`<div class="notif-item ${!n.leida?'unread':''}">
+        <div class="notif-icon ${colMap[n.tipo]||'bg-gray'}"><i class="ti ${icoMap[n.tipo]||'ti-bell'}"></i></div>
+        <div style="flex:1">
+          <div style="font-size:13.5px;font-weight:500">${n.titulo||''}</div>
+          <div style="font-size:13px;color:var(--text2);margin:2px 0">${n.mensaje||''}</div>
+          <div style="font-size:11.5px;color:var(--text3)">${fRel(n.fecha)}</div>
+        </div>
+        ${!n.leida?'<div style="width:8px;height:8px;background:var(--accent);border-radius:50%;flex-shrink:0;margin-top:4px"></div>':''}
+      </div>`).join('')}`;
+  setBadge(0);
+}
+
+window.marcarLeidas=async()=>{
+  try{
+    const q=query(collection(db,'notificaciones'),where('usuario_id','==',CU.uid),where('leida','==',false));
+    const snap=await getDocs(q);
+    await Promise.all(snap.docs.map(d=>updateDoc(doc(db,'notificaciones',d.id),{leida:true})));
+    showPage('notificaciones');
+  }catch(e){}
+};
+
+async function pPerfil(C) {
+  let pf={};
+  try{const snap=await getDoc(doc(db,'perfiles_adulto',CU.uid));if(snap.exists())pf=snap.data();}catch(e){}
+  const nom=CUD?.nombre||''; const ini=nom.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const cMap={arte:'🎨 Arte',bienestar:'🧘 Bienestar',musica:'🎵 Música',cocina:'🍳 Cocina',teatro:'🎭 Teatro',naturaleza:'🌿 Naturaleza',viajes:'✈️ Viajes',baile:'💃 Baile',lectura:'📚 Lectura',tecnologia:'💻 Tecnología'};
+  const lMap={ninguna:'✅ Ninguna',movilidad_reducida:'🦵 Movilidad reducida',problemas_cardiacos:'❤️ Cardíacos',baja_vision:'👁️ Baja visión',hipoacusia:'👂 Hipoacusia',osteoporosis:'🦴 Osteoporosis'};
+  C.innerHTML=`
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px">
+        <div class="card" style="text-align:center;margin-bottom:1rem">
+          <div class="avatar lg" style="margin:0 auto 1rem">${ini}</div>
+          <h2 style="font-size:20px;margin-bottom:3px">${nom}</h2>
+          <p style="color:var(--text3);font-size:13px">${CUD?.email||''}</p>
+          <span class="badge bg-green" style="margin-top:.75rem">Adulto Mayor</span>
+        </div>
+        <div class="card card-sm">
+          <div style="font-size:11.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.75rem">Datos personales</div>
+          <div style="font-size:13.5px;display:flex;flex-direction:column;gap:.5rem">
+            <div><span style="color:var(--text3)">Ciudad:</span> <strong>${pf.ciudad||'—'}</strong></div>
+            <div><span style="color:var(--text3)">Edad:</span> <strong>${pf.edad||'—'}</strong></div>
+            <div><span style="color:var(--text3)">Movilidad:</span> <strong>${pf.tiene_movilidad?'Sí':'No'}</strong></div>
+            <div><span style="color:var(--text3)">Medicamentos:</span> <strong>${pf.consume_medicamentos?'Sí':'No'}</strong></div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:2;min-width:260px">
+        <div class="card" style="margin-bottom:1rem">
+          <div style="font-size:11.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.875rem">Gustos e intereses</div>
+          <div class="check-group">${(pf.gustos||[]).map(g=>`<span class="check-tag sel">${cMap[g]||g}</span>`).join('')||'<span style="color:var(--text3)">Sin gustos registrados</span>'}</div>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <div style="font-size:11.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.875rem">Condiciones de salud</div>
+          <div class="check-group">${(pf.limitaciones||[]).map(l=>`<span class="check-tag sel">${lMap[l]||l}</span>`).join('')||'<span style="color:var(--text3)">Sin limitaciones registradas</span>'}</div>
+        </div>
+        <div class="card">
+          <div style="font-size:11.5px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.875rem">Historial clínico</div>
+          <p style="font-size:13.5px;color:var(--text2)">${pf.historial_clinico||'Sin notas adicionales'}</p>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function pConfiguracion(C) {
+  let cfg={tamano_letra:16,modo_daltonico:false,notif_activas:true};
+  try{const snap=await getDoc(doc(db,'configuracion',CU.uid));if(snap.exists())cfg={...cfg,...snap.data()};}catch(e){}
+  const fsz=[14,16,19,22]; const fsl=['Pequeño','Normal','Grande','Muy grande'];
+  let idx=fsz.indexOf(cfg.tamano_letra); if(idx<0)idx=1;
+  window._cfg=cfg;
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Configuración</h1>
+    <div class="card" style="margin-bottom:1rem">
+      <h3 style="font-size:15px;color:var(--text2);margin-bottom:1rem">Accesibilidad</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:14.5px;font-weight:500">Tamaño de letra</div><div style="font-size:12.5px;color:var(--text3)">Ajusta el texto en toda la app</div></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn btn-outline btn-sm" onclick="chFS(-1)">A−</button>
+          <span id="fs-lbl" style="font-size:13.5px;min-width:58px;text-align:center">${fsl[idx]}</span>
+          <button class="btn btn-outline btn-sm" onclick="chFS(1)">A+</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:14.5px;font-weight:500">Modo daltónico</div><div style="font-size:12.5px;color:var(--text3)">Cambia la paleta de colores</div></div>
+        <div class="toggle ${cfg.modo_daltonico?'on':''}" id="tgl-dalton" onclick="tglDalton()"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.875rem 0">
+        <div><div style="font-size:14.5px;font-weight:500">Notificaciones</div><div style="font-size:12.5px;color:var(--text3)">Recordatorios de actividades</div></div>
+        <div class="toggle ${cfg.notif_activas!==false?'on':''}" id="tgl-notif" onclick="tglNotif()"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:15px;color:var(--text2);margin-bottom:1rem">Mi cuenta</h3>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre</label><input class="form-input" id="cfg-nom" value="${CUD?.nombre||''}"></div>
+        <div class="form-group"><label class="form-label">Correo</label><input class="form-input" value="${CUD?.email||''}" disabled style="opacity:.6"></div>
+      </div>
+      <button class="btn btn-primary" onclick="saveNom()"><i class="ti ti-check"></i> Guardar</button>
+    </div>`;
+}
+
+window.chFS=async d=>{
+  const s=[14,16,19,22],l=['Pequeño','Normal','Grande','Muy grande'];
+  let idx=s.findIndex(x=>x===parseInt(getComputedStyle(document.documentElement).getPropertyValue('--fs')));
+  if(idx<0)idx=1;
+  idx=Math.max(0,Math.min(3,idx+d));
+  document.documentElement.style.setProperty('--fs',s[idx]+'px');
+  el('fs-lbl').textContent=l[idx];
+  try{await updateDoc(doc(db,'configuracion',CU.uid),{tamano_letra:s[idx]});}catch(e){}
+};
+window.tglDalton=async()=>{
+  const t=el('tgl-dalton'),on=!t.classList.contains('on');
+  t.classList.toggle('on',on); document.body.classList.toggle('daltonico',on);
+  try{await updateDoc(doc(db,'configuracion',CU.uid),{modo_daltonico:on});}catch(e){}
+};
+window.tglNotif=async()=>{
+  const t=el('tgl-notif'),on=!t.classList.contains('on');
+  t.classList.toggle('on',on);
+  try{await updateDoc(doc(db,'configuracion',CU.uid),{notif_activas:on});}catch(e){}
+};
+window.saveNom=async()=>{
+  const n=el('cfg-nom').value.trim(); if(!n){toast('Ingresa un nombre','error');return;}
+  try{await updateDoc(doc(db,'usuarios',CU.uid),{nombre:n}); CUD.nombre=n; el('sb-name').textContent=n; el('topbar-av').textContent=n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); toast('Perfil actualizado','success');}
+  catch(e){toast('Error al guardar','error');}
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// PÁGINAS — ACOMPAÑANTE
+// ══════════════════════════════════════════════════════════════════════════
+
+async function pResumenAc(C) {
+  let adulto=null,pf=null,reservas=[];
+  try{
+    const q=query(collection(db,'acompanantes'),where('usuario_id','==',CU.uid));
+    const snap=await getDocs(q);
+    if(!snap.empty){
+      const ac=snap.docs[0].data();
+      const [us,ps]=await Promise.all([getDoc(doc(db,'usuarios',ac.adulto_id)),getDoc(doc(db,'perfiles_adulto',ac.adulto_id))]);
+      if(us.exists())adulto={id:ac.adulto_id,...us.data()};
+      if(ps.exists())pf=ps.data();
+      const rs=await getDocs(query(collection(db,'reservas'),where('adulto_id','==',ac.adulto_id)));
+      reservas=rs.docs.map(d=>d.data());
+    }
+  }catch(e){}
+  const total=reservas.length,asist=reservas.filter(r=>r.estado==='asistida').length;
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Seguimiento${adulto?` — ${adulto.nombre}`:''}</h1>
+    ${!adulto?`<div class="alert alert-info"><i class="ti ti-info-circle" style="font-size:15px"></i>No tienes ningún adulto mayor vinculado todavía.</div>`:`
+    <div class="grid-4" style="margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Reservas totales</div></div>
+      <div class="stat-card"><div class="stat-num">${asist}</div><div class="stat-label">Actividades asistidas</div></div>
+      <div class="stat-card"><div class="stat-num">${total>0?Math.round(asist/total*100):0}%</div><div class="stat-label">Asistencia</div></div>
+      <div class="stat-card"><div class="stat-num">${pf?.ciudad||'—'}</div><div class="stat-label">Ciudad</div></div>
+    </div>
+    <div class="flex-row" style="gap:1.25rem">
+      <div class="card" style="flex:1">
+        <h3 style="font-size:15px;margin-bottom:.875rem">Gustos registrados</h3>
+        <div class="check-group">${(pf?.gustos||[]).map(g=>`<span class="check-tag sel">${g}</span>`).join('')||'Sin datos'}</div>
+      </div>
+      <div class="card" style="flex:1">
+        <h3 style="font-size:15px;margin-bottom:.875rem">Limitaciones físicas</h3>
+        <div class="check-group">${(pf?.limitaciones||[]).map(l=>`<span class="check-tag sel">${l}</span>`).join('')||'Sin datos'}</div>
+      </div>
+    </div>`}`;
+}
+
+async function pHistorial(C) {
+  let reservas=[];
+  try{
+    const q=query(collection(db,'acompanantes'),where('usuario_id','==',CU.uid));
+    const snap=await getDocs(q);
+    if(!snap.empty){
+      const ac=snap.docs[0].data();
+      const rs=await getDocs(query(collection(db,'reservas'),where('adulto_id','==',ac.adulto_id),orderBy('fecha_reserva','desc'),limit(50)));
+      reservas=rs.docs.map(d=>({id:d.id,...d.data()}));
+    }
+  }catch(e){}
+  const stBdg={confirmada:'bg-blue',asistida:'bg-green',cancelada:'bg-danger',pendiente:'bg-warm'};
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Historial de actividades</h1>
+    <div class="card">
+      ${reservas.length===0?'<div class="empty" style="padding:2rem"><i class="ti ti-history" style="font-size:36px"></i><p>Sin historial aún</p></div>':`
+      <table class="tbl">
+        <thead><tr><th>Fecha</th><th>Actividad</th><th>Estado</th></tr></thead>
+        <tbody>${reservas.map(r=>`<tr><td style="font-size:12px">${fFecha(r.fecha_reserva)}</td><td>${r.actividad_titulo||'—'}</td><td><span class="badge ${stBdg[r.estado]||'bg-gray'}">${r.estado||'—'}</span></td></tr>`).join('')}</tbody>
+      </table>`}
+    </div>`;
+}
+
+async function pEstadAc(C) {
+  let reservas=[];
+  try{
+    const q=query(collection(db,'acompanantes'),where('usuario_id','==',CU.uid));
+    const snap=await getDocs(q);
+    if(!snap.empty){
+      const ac=snap.docs[0].data();
+      const rs=await getDocs(query(collection(db,'reservas'),where('adulto_id','==',ac.adulto_id)));
+      reservas=rs.docs.map(d=>d.data());
+    }
+  }catch(e){}
+  const total=reservas.length,asist=reservas.filter(r=>r.estado==='asistida').length;
+  const catC={};
+  reservas.forEach(r=>{if(r.categoria_id)catC[r.categoria_id]=(catC[r.categoria_id]||0)+1;});
+  const topC=Object.entries(catC).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxC=topC[0]?.[1]||1;
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Estadísticas</h1>
+    <div class="grid-4" style="margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total reservas</div></div>
+      <div class="stat-card"><div class="stat-num">${asist}</div><div class="stat-label">Asistidas</div></div>
+      <div class="stat-card"><div class="stat-num">${total>0?Math.round(asist/total*100):0}%</div><div class="stat-label">% Asistencia</div></div>
+      <div class="stat-card"><div class="stat-num">${topC.length}</div><div class="stat-label">Categorías</div></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:1rem">Categorías frecuentes</h3>
+      ${topC.length===0?'<p style="color:var(--text3)">Sin datos suficientes</p>':
+        topC.map(([c,n])=>`<div style="margin-bottom:.875rem">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${c}</span><span style="color:var(--text3)">${n}</span></div>
+          <div class="progress-bar"><div class="progress-fill pf-green" style="width:${Math.round(n/maxC*100)}%"></div></div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// PÁGINAS — PROVEEDOR
+// ══════════════════════════════════════════════════════════════════════════
+
+async function pDashPr(C) {
+  const uid=CU.uid; let acts=[],reservas=[];
+  try{
+    const snap=await getDocs(query(collection(db,'actividades'),where('proveedor_id','==',uid)));
+    acts=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(acts.length){
+      const rs=await getDocs(collection(db,'reservas'));
+      const ids=new Set(acts.map(a=>a.id));
+      reservas=rs.docs.map(d=>d.data()).filter(r=>ids.has(r.actividad_id));
+    }
+  }catch(e){}
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Dashboard — ${CUD?.nombre||'Proveedor'}</h1>
+    <div class="grid-4" style="margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-num">${acts.length}</div><div class="stat-label">Actividades publicadas</div></div>
+      <div class="stat-card"><div class="stat-num">${reservas.length}</div><div class="stat-label">Reservas totales</div></div>
+      <div class="stat-card"><div class="stat-num">${acts.filter(a=>a.estado==='aprobada').length}</div><div class="stat-label">Aprobadas</div></div>
+      <div class="stat-card"><div class="stat-num">${acts.filter(a=>a.estado==='revision').length}</div><div class="stat-label">En revisión</div><div class="stat-delta down">${acts.filter(a=>a.estado==='revision').length>0?'Pendiente de admin':''}</div></div>
+    </div>
+    <div class="card">
+      <div class="section-hdr" style="margin-bottom:.875rem"><h3 style="font-size:15px">Mis actividades</h3><button class="btn btn-primary btn-sm" onclick="showPage('nueva-actividad')"><i class="ti ti-plus"></i> Nueva</button></div>
+      ${acts.length===0?'<div class="empty" style="padding:1.5rem"><i class="ti ti-calendar-event" style="font-size:32px"></i><p>Aún no has publicado actividades</p></div>':`
+      <table class="tbl">
+        <thead><tr><th>Actividad</th><th>Estado</th><th>Reservas</th><th></th></tr></thead>
+        <tbody>${acts.map(a=>`<tr>
+          <td>${a.imagen_emoji||'📌'} ${a.titulo}</td>
+          <td><span class="badge ${a.estado==='aprobada'?'bg-green':a.estado==='revision'?'bg-warm':'bg-danger'}">${a.estado}</span></td>
+          <td>${reservas.filter(r=>r.actividad_id===a.id).length}</td>
+          <td><button class="btn btn-outline btn-sm" onclick="openActModal('${a.id}')">Ver</button></td>
+        </tr>`).join('')}</tbody>
+      </table>`}
+    </div>`;
+}
+
+async function pNuevaAct(C) {
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:.4rem">Publicar nueva actividad</h1>
+    <p style="color:var(--text2);margin-bottom:1.5rem;font-size:13.5px">Será revisada por el equipo de Vitalia antes de publicarse.</p>
+    <div class="card">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre *</label><input class="form-input" id="na-tit" placeholder="Ej: Taller de cerámica"></div>
+        <div class="form-group"><label class="form-label">Categoría *</label>
+          <select class="form-input" id="na-cat">
+            <option value="">Selecciona</option>
+            <option value="arte">🎨 Arte</option><option value="bienestar">🧘 Bienestar</option>
+            <option value="musica">🎵 Música</option><option value="cocina">🍳 Cocina</option>
+            <option value="teatro">🎭 Teatro</option><option value="naturaleza">🌿 Naturaleza</option>
+            <option value="viajes">✈️ Viajes</option><option value="baile">💃 Baile</option>
+            <option value="lectura">📚 Lectura</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Descripción *</label><textarea class="form-input" id="na-desc" placeholder="Describe la actividad detalladamente..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Dirección *</label><input class="form-input" id="na-dir" placeholder="Dirección completa en tu ciudad"></div>
+        <div class="form-group"><label class="form-label">Precio (COP, 0 = gratuito)</label><input class="form-input" id="na-precio" type="number" min="0" value="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Dificultad</label><select class="form-input" id="na-dif"><option value="facil">Fácil</option><option value="medio">Medio</option><option value="intenso">Intenso</option></select></div>
+        <div class="form-group"><label class="form-label">Tipo</label><select class="form-input" id="na-tipo"><option value="presencial">Presencial</option><option value="virtual">Virtual</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Cupo máximo</label><input class="form-input" id="na-cupo" type="number" min="1" value="20"></div>
+        <div class="form-group"><label class="form-label">Días y hora (Ej: Martes 9am)</label><input class="form-input" id="na-hor" placeholder="Ej: Martes y Jueves 9:00am"></div>
+      </div>
+      <div id="na-err" class="alert alert-error" style="display:none"></div>
+      <div style="display:flex;gap:.75rem;margin-top:.5rem">
+        <button class="btn btn-outline" onclick="showPage('dashboard-pr')">Cancelar</button>
+        <button class="btn btn-primary" onclick="pubAct()"><i class="ti ti-send"></i> Enviar para revisión</button>
+      </div>
+    </div>`;
+}
+
+window.pubAct=async()=>{
+  const tit=v('na-tit'),cat=v('na-cat'),desc=v('na-desc'),dir=v('na-dir');
+  const err=el('na-err');
+  if(!tit||!cat||!desc||!dir){showErr(err,'Completa todos los campos obligatorios');return;}
+  const emojiMap={arte:'🎨',bienestar:'🧘',musica:'🎵',cocina:'🍳',teatro:'🎭',naturaleza:'🌿',viajes:'✈️',baile:'💃',lectura:'📚'};
+  try{
+    await addDoc(collection(db,'actividades'),{
+      titulo:tit,categoria_id:cat,descripcion:desc,direccion:dir,
+      precio:parseFloat(v('na-precio'))||0,dificultad:v('na-dif'),tipo:v('na-tipo'),
+      cupo_maximo:parseInt(v('na-cupo'))||20,horario:v('na-hor'),
+      proveedor_id:CU.uid,proveedor_nombre:CUD?.nombre||'',
+      estado:'revision',fecha_creacion:serverTimestamp(),
+      imagen_emoji:emojiMap[cat]||'📌'
+    });
+    ACTS=[];
+    toast('Actividad enviada para revisión','success');
+    showPage('dashboard-pr');
+  }catch(e){showErr(err,'Error: '+e.message);}
+};
+
+async function pReservasPr(C) {
+  const uid=CU.uid; let reservas=[];
+  try{
+    const snap=await getDocs(query(collection(db,'actividades'),where('proveedor_id','==',uid)));
+    const ids=new Set(snap.docs.map(d=>d.id));
+    const rs=await getDocs(collection(db,'reservas'));
+    reservas=rs.docs.map(d=>({id:d.id,...d.data()})).filter(r=>ids.has(r.actividad_id));
+  }catch(e){}
+  const stBdg={confirmada:'bg-blue',asistida:'bg-green',cancelada:'bg-danger',pendiente:'bg-warm'};
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Reservas de tus actividades</h1>
+    <div class="card">
+      ${reservas.length===0?'<div class="empty" style="padding:2rem"><i class="ti ti-users" style="font-size:36px"></i><p>Sin reservas aún</p></div>':`
+      <table class="tbl">
+        <thead><tr><th>Actividad</th><th>Fecha reserva</th><th>Estado</th><th>Acción</th></tr></thead>
+        <tbody>${reservas.map(r=>`<tr>
+          <td>${r.actividad_titulo||'—'}</td>
+          <td style="font-size:12px">${fFecha(r.fecha_reserva)}</td>
+          <td><span class="badge ${stBdg[r.estado]||'bg-gray'}">${r.estado||'—'}</span></td>
+          <td>${r.estado==='confirmada'?`<button class="btn btn-approve btn-sm" onclick="mrkAsistida('${r.id}')">✓ Asistió</button>`:'—'}</td>
+        </tr>`).join('')}</tbody>
+      </table>`}
+    </div>`;
+}
+window.mrkAsistida=async id=>{
+  try{await updateDoc(doc(db,'reservas',id),{estado:'asistida'});toast('Marcado como asistida','success');showPage('reservas-pr');}
+  catch(e){toast('Error','error');}
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// PÁGINAS — ADMIN
+// ══════════════════════════════════════════════════════════════════════════
+
+async function pDashAdm(C) {
+  let tu=0,tp=0,ta=0,trev=0;
+  try{
+    const [u,p,a,r]=await Promise.all([
+      getDocs(collection(db,'usuarios')),
+      getDocs(query(collection(db,'usuarios'),where('rol','==','proveedor'))),
+      getDocs(collection(db,'actividades')),
+      getDocs(query(collection(db,'actividades'),where('estado','==','revision'))),
+    ]);
+    tu=u.size;tp=p.size;ta=a.size;trev=r.size;
+    const nb=el('nb-revisar');if(nb){nb.textContent=trev;nb.style.display=trev>0?'inline':'none';}
+  }catch(e){}
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Panel de Administración</h1>
+    <div class="grid-4" style="margin-bottom:1.5rem">
+      <div class="stat-card"><div class="stat-num">${tu}</div><div class="stat-label">Usuarios registrados</div></div>
+      <div class="stat-card"><div class="stat-num">${tp}</div><div class="stat-label">Proveedores</div></div>
+      <div class="stat-card"><div class="stat-num">${ta}</div><div class="stat-label">Actividades totales</div></div>
+      <div class="stat-card"><div class="stat-num">${trev}</div><div class="stat-label">Pendientes revisión</div><div class="stat-delta ${trev>0?'down':''}">${trev>0?'⚠ Requieren atención':''}</div></div>
+    </div>
+    ${trev>0?`<div class="alert alert-warn"><i class="ti ti-alert-triangle" style="font-size:15px;flex-shrink:0"></i>Hay ${trev} actividad${trev!==1?'es':''} pendiente${trev!==1?'s':''} de revisión. <a href="#" onclick="showPage('revisar')">Revisar ahora →</a></div>`:'<div class="alert alert-success"><i class="ti ti-check" style="font-size:15px"></i>Todo al día — sin elementos pendientes</div>'}`;
+}
+
+async function pRevisar(C) {
+  let acts=[];
+  try{
+    const snap=await getDocs(query(collection(db,'actividades'),where('estado','==','revision')));
+    acts=snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){}
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:.4rem">Revisión pendiente</h1>
+    <p style="color:var(--text2);margin-bottom:1.25rem;font-size:13.5px">Verifica que cada actividad sea apropiada y segura para adultos mayores.</p>
+    ${acts.length===0?`<div class="empty"><i class="ti ti-shield-check" style="font-size:42px;color:var(--accent)"></i><h3 style="margin:.875rem 0 .4rem">¡Todo al día!</h3><p>No hay actividades pendientes</p></div>`:''}
+    <div id="rev-list">${acts.map(a=>`
+      <div id="rev-${a.id}" style="background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:1rem;margin-bottom:.75rem;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:28px;flex-shrink:0">${a.imagen_emoji||'📌'}</span>
+        <div style="flex:1;min-width:180px">
+          <div style="font-weight:500;font-size:14px">${a.titulo}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${a.proveedor_nombre||'—'} · ${a.categoria_id||''} · ${a.tipo||''} · ${a.precio===0?'Gratuito':'$'+a.precio?.toLocaleString()+' COP'}</div>
+          <div style="font-size:12.5px;color:var(--text2);margin-top:4px">${(a.descripcion||'').slice(0,90)}...</div>
+        </div>
+        <span class="badge bg-warm">Pendiente</span>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-approve btn-sm" onclick="aprobar('${a.id}',this)"><i class="ti ti-check"></i> Aprobar</button>
+          <button class="btn btn-danger btn-sm" onclick="rechazar('${a.id}',this)"><i class="ti ti-x"></i> Rechazar</button>
+          <button class="btn btn-outline btn-sm" onclick="openActModal('${a.id}')">Detalle</button>
+        </div>
+      </div>`).join('')}</div>`;
+}
+
+window.aprobar=async(id,btn)=>{
+  btn.disabled=true;
+  try{
+    await updateDoc(doc(db,'actividades',id),{estado:'aprobada'});
+    el(`rev-${id}`).style.opacity='.4';
+    el(`rev-${id}`).style.pointerEvents='none';
+    toast('Actividad aprobada y publicada','success');
+    ACTS=[];
+  }catch(e){toast('Error al aprobar','error');btn.disabled=false;}
+};
+window.rechazar=async(id,btn)=>{
+  const motivo=prompt('Motivo del rechazo (opcional):');
+  btn.disabled=true;
+  try{
+    await updateDoc(doc(db,'actividades',id),{estado:'rechazada',motivo_rechazo:motivo||''});
+    el(`rev-${id}`).style.opacity='.4';
+    el(`rev-${id}`).style.pointerEvents='none';
+    toast('Actividad rechazada','warn');
+    ACTS=[];
+  }catch(e){toast('Error al rechazar','error');btn.disabled=false;}
+};
+
+async function pProvsAdm(C) {
+  let provs=[];
+  try{const snap=await getDocs(query(collection(db,'usuarios'),where('rol','==','proveedor')));provs=snap.docs.map(d=>({id:d.id,...d.data()}));}catch(e){}
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Proveedores</h1>
+    <div class="card">
+      ${provs.length===0?'<div class="empty" style="padding:2rem"><i class="ti ti-building" style="font-size:36px"></i><p>Sin proveedores registrados</p></div>':`
+      <table class="tbl">
+        <thead><tr><th>Nombre</th><th>Correo</th><th>Estado</th><th>Acción</th></tr></thead>
+        <tbody>${provs.map(p=>`<tr>
+          <td>${p.nombre||'—'}</td><td style="font-size:12px">${p.email||'—'}</td>
+          <td><span class="badge ${p.activo!==false?'bg-green':'bg-danger'}">${p.activo!==false?'Activo':'Inactivo'}</span></td>
+          <td><button class="btn btn-outline btn-sm" onclick="toggleProv('${p.id}',${p.activo!==false})">${p.activo!==false?'Desactivar':'Activar'}</button></td>
+        </tr>`).join('')}</tbody>
+      </table>`}
+    </div>`;
+}
+window.toggleProv=async(id,active)=>{
+  try{await updateDoc(doc(db,'usuarios',id),{activo:!active});toast(active?'Proveedor desactivado':'Proveedor activado','success');showPage('proveedores-adm');}
+  catch(e){toast('Error','error');}
+};
+
+async function pUsuariosAdm(C) {
+  let users=[];
+  try{const snap=await getDocs(collection(db,'usuarios'));users=snap.docs.map(d=>({id:d.id,...d.data()}));}catch(e){}
+  C.innerHTML=`
+    <h1 style="font-size:22px;margin-bottom:1.25rem">Usuarios registrados</h1>
+    <div class="grid-3" style="margin-bottom:1.25rem">
+      <div class="stat-card"><div class="stat-num">${users.filter(u=>u.rol==='adulto').length}</div><div class="stat-label">Adultos mayores</div></div>
+      <div class="stat-card"><div class="stat-num">${users.filter(u=>u.rol==='proveedor').length}</div><div class="stat-label">Proveedores</div></div>
+      <div class="stat-card"><div class="stat-num">${users.filter(u=>u.rol==='acompanante').length}</div><div class="stat-label">Acompañantes</div></div>
+    </div>
+    <div class="card">
+      <table class="tbl">
+        <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th></tr></thead>
+        <tbody>${users.map(u=>`<tr><td>${u.nombre||'—'}</td><td style="font-size:11.5px">${u.email||'—'}</td><td><span class="badge bg-gray">${u.rol||'—'}</span></td><td><span class="badge ${u.activo!==false?'bg-green':'bg-danger'}">${u.activo!==false?'Activo':'Inactivo'}</span></td></tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// MODAL ACTIVIDAD
+// ══════════════════════════════════════════════════════════════════════════
+window.openActModal=async id=>{
+  let a=ACTS.find(x=>x.id===id);
+  if(!a){try{const s=await getDoc(doc(db,'actividades',id));a={id,...s.data()};}catch(e){return;}}
+  let yaRes=false;
+  if(CU&&CUD?.rol==='adulto'){
+    try{const q=query(collection(db,'reservas'),where('adulto_id','==',CU.uid),where('actividad_id','==',id),where('estado','in',['pendiente','confirmada']));const s=await getDocs(q);yaRes=!s.empty;}catch(e){}
+  }
+  el('modal-body').innerHTML=`
+    <div style="text-align:center;font-size:52px;margin-bottom:.875rem">${a.imagen_emoji||'📌'}</div>
+    <h2 style="font-size:20px;margin-bottom:.4rem">${a.titulo}</h2>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:1rem">
+      <span class="badge ${a.precio===0?'bg-green':'bg-warm'}">${a.precio===0?'Gratuito':'$'+a.precio?.toLocaleString()+' COP'}</span>
+      <span class="badge bg-gray">${a.dificultad||''}</span>
+      <span class="badge bg-blue">${a.tipo||''}</span>
+    </div>
+    <p style="color:var(--text2);font-size:13.5px;line-height:1.6;margin-bottom:1.25rem">${a.descripcion||''}</p>
+    <div style="background:var(--bg);border-radius:var(--r-sm);padding:.875rem;margin-bottom:1.25rem;font-size:13px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem">
+        <div>📍 ${a.direccion||'—'}</div>
+        <div>🕐 ${a.horario||(a.dias_semana||[]).join(', ')+' '+a.hora||'—'}</div>
+        <div>👥 Cupo: ${a.cupo_maximo||'—'}</div>
+        <div>⏱️ ${a.duracion_min?a.duracion_min+' min':'—'}</div>
+      </div>
+    </div>
+    ${a.precio>0?`<div class="alert alert-info" style="margin-bottom:1rem"><i class="ti ti-info-circle" style="font-size:14px"></i>El pago se realiza directamente con el proveedor. Vitalia solo gestiona la reserva.</div>`:''}
+    ${yaRes?`<div class="alert alert-success"><i class="ti ti-check" style="font-size:14px"></i>Ya tienes una reserva activa para esta actividad</div>`:
+      CUD?.rol==='adulto'?`<button class="btn btn-primary btn-lg" style="width:100%;justify-content:center" id="btn-res" onclick="hacerReserva('${id}','${a.titulo.replace(/'/g,"\\'")}',this)"><i class="ti ti-calendar-plus"></i> Reservar lugar</button>`:''}`;
+  el('modal').classList.add('open');
+};
+
+window.hacerReserva=async(actId,titulo,btn)=>{
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Reservando...';
+  try{
+    const uid=CU.uid;
+    await addDoc(collection(db,'reservas'),{adulto_id:uid,actividad_id:actId,actividad_titulo:titulo,estado:'confirmada',fecha_reserva:serverTimestamp(),hora:'',direccion:'',pago_externo:false});
+    await addNotif(uid,'reserva','Reserva confirmada',`Tu lugar en "${titulo}" está confirmado.`);
+    closeModal(); toast('¡Reserva confirmada!','success'); ACTS=[];
+  }catch(e){toast('Error al reservar: '+e.message,'error');btn.disabled=false;btn.innerHTML='<i class="ti ti-calendar-plus"></i> Reservar lugar';}
+};
+
+// ══════════════════════════════════════════════════════════════════════════
+// PORTAL GOBIERNO
+// ══════════════════════════════════════════════════════════════════════════
+async function cargarGobierno() {
+  let tu=0,ta=0,tp=0;
+  try{
+    const [u,a,p]=await Promise.all([
+      getDocs(query(collection(db,'usuarios'),where('rol','==','adulto'))),
+      getDocs(query(collection(db,'actividades'),where('estado','==','aprobada'))),
+      getDocs(query(collection(db,'usuarios'),where('rol','==','proveedor'))),
+    ]);
+    tu=u.size;ta=a.size;tp=p.size;
+  }catch(e){}
+  const stats=el('gov-stats'),chart=el('gov-chart'),cats=el('gov-cats'),rep=el('gov-reports');
+  if(stats)stats.innerHTML=[
+    ['Adultos registrados',tu,'↑ Creciendo'],['Actividades disponibles',ta,''],
+    ['Proveedores activos',tp,''],['Asistencia promedio','87%','↑ +5% vs 2025'],
+  ].map(([l,n,d])=>`<div class="stat-card"><div class="stat-num">${n}</div><div class="stat-label">${l}</div>${d?`<div class="stat-delta up">${d}</div>`:''}</div>`).join('');
+  if(chart)chart.innerHTML=`<h3 style="font-size:14.5px;margin-bottom:1rem">Crecimiento de usuarios</h3><div class="chart-bars">${['Oct','Nov','Dic','Ene','Feb','Mar'].map((m,i)=>{const vl=[20,35,55,72,85,Math.max(tu,100)];const mx=Math.max(...vl);return`<div class="bar-wrap"><div class="bar${i===5?' filled':''}" style="height:${Math.round(vl[i]/mx*80)+10}px"></div><div class="bar-lbl">${m}</div></div>`;}).join('')}</div>`;
+  if(cats)cats.innerHTML=`<h3 style="font-size:14.5px;margin-bottom:1rem">Por categoría</h3>${[['🎨 Arte',78],['🧘 Bienestar',65],['🎵 Música',45],['🎭 Teatro',30]].map(([n,p])=>`<div style="margin-bottom:.875rem"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>${n}</span><span style="color:var(--text3)">${p}%</span></div><div class="progress-bar"><div class="progress-fill pf-green" style="width:${p}%"></div></div></div>`).join('')}`;
+  if(rep)rep.innerHTML=[
+    ['Informe mensual — Mayo 2026','Indicadores de actividad y bienestar de adultos mayores.','PDF · 2.4 MB'],
+    ['Análisis por comunas — Q1 2026','Distribución geográfica de participación por zona.','PDF · 1.8 MB'],
+    ['Impacto en salud — 2025','Correlación entre Vitalia y mejora de indicadores de salud.','PDF · 3.1 MB'],
+    ['Reporte de inclusión digital','Uso de apps recomendadas y adopción tecnológica.','PDF · 1.2 MB'],
+  ].map(([t,d,s])=>`<div class="card card-sm" style="display:flex;gap:12px;align-items:flex-start"><i class="ti ti-file-text" style="font-size:30px;color:var(--blue);flex-shrink:0"></i><div style="flex:1"><div style="font-weight:500;font-size:13.5px;margin-bottom:3px">${t}</div><div style="font-size:12.5px;color:var(--text2);margin-bottom:6px">${d}</div><span class="badge bg-blue">${s}</span></div><button class="btn btn-outline btn-sm"><i class="ti ti-download"></i></button></div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════
+async function getActs() {
+  if(ACTS.length>0)return ACTS;
+  try{const q=query(collection(db,'actividades'),where('estado','==','aprobada'));const snap=await getDocs(q);ACTS=snap.docs.map(d=>({id:d.id,...d.data()}));}
+  catch(e){ACTS=[...SEED_ACTS.map((a,i)=>({id:'demo-'+i,...a,estado:'aprobada',proveedor_id:'demo',proveedor_nombre:'Demo'}))];} 
+  return ACTS;
+}
+
+async function poblarFiltros() {
+  const s=el('f-cat'); if(!s)return;
+  const catMap={arte:'🎨 Arte',bienestar:'🧘 Bienestar',musica:'🎵 Música',cocina:'🍳 Cocina',teatro:'🎭 Teatro',naturaleza:'🌿 Naturaleza',viajes:'✈️ Viajes',baile:'💃 Baile',lectura:'📚 Lectura',tecnologia:'💻 Tecnología'};
+  const cats=[...new Set(ACTS.map(a=>a.categoria_id).filter(Boolean))];
+  s.innerHTML='<option value="">Todas</option>'+cats.map(c=>`<option value="${c}">${catMap[c]||c}</option>`).join('');
+}
+
+async function getProxReservas(uid,n) {
+  try{const q=query(collection(db,'reservas'),where('adulto_id','==',uid),where('estado','in',['confirmada','pendiente']),limit(n));const s=await getDocs(q);return s.docs.map(d=>d.data());}
+  catch(e){return[];}
+}
+
+async function addNotif(uid,tipo,titulo,mensaje) {
+  try{await addDoc(collection(db,'notificaciones'),{usuario_id:uid,tipo,titulo,mensaje,leida:false,fecha:serverTimestamp()});}
+  catch(e){}
+}
+
+function listenNotif() {
+  if(!CU)return; if(UNSUB){UNSUB();UNSUB=null;}
+  try{
+    const q=query(collection(db,'notificaciones'),where('usuario_id','==',CU.uid),where('leida','==',false));
+    UNSUB=onSnapshot(q,snap=>{setBadge(snap.size);});
+  }catch(e){}
+}
+
+function setBadge(n) {
+  const b=el('notif-badge'); if(b){b.textContent=n;b.style.display=n>0?'flex':'none';}
+  const nb=el('nb-notificaciones'); if(nb){nb.textContent=n;nb.style.display=n>0?'inline':'none';}
+}
+
+function actCard(a) {
+  const d=document.createElement('div'); d.className='act-card';
+  d.onclick=()=>openActModal(a.id);
+  d.innerHTML=`<div class="act-img">${a.imagen_emoji||'📌'}</div>
+    <div class="act-body">
+      <div class="act-title">${a.titulo}</div>
+      <div class="act-meta"><span>${a.categoria_id||''}</span><span>${a.tipo||''}</span><span>${(a.dias_semana||[]).join(', ')||a.horario||''}</span></div>
+    </div>
+    <div class="act-footer">
+      <span class="badge ${a.precio===0?'bg-green':'bg-warm'}">${a.precio===0?'Gratuito':'$'+a.precio?.toLocaleString()+' COP'}</span>
+      <span class="badge bg-gray">${a.dificultad||''}</span>
+    </div>`;
+  return d;
+}
+
+function fFecha(ts) { if(!ts)return'—'; const d=ts.toDate?ts.toDate():new Date(ts); return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'}); }
+function fCorta(ts) { if(!ts)return'—'; const d=ts.toDate?ts.toDate():new Date(ts); return d.toLocaleDateString('es-CO',{day:'2-digit',month:'short'}); }
+function fRel(ts) {
+  if(!ts)return'';
+  const d=ts.toDate?ts.toDate():new Date(ts);
+  const diff=Math.floor((Date.now()-d.getTime())/60000);
+  if(diff<1)return'Ahora';if(diff<60)return`Hace ${diff} min`;
+  if(diff<1440)return`Hace ${Math.floor(diff/60)} h`;
+  return`Hace ${Math.floor(diff/1440)} día${Math.floor(diff/1440)!==1?'s':''}`;
+}
+
+function selTags(sel) { return[...document.querySelectorAll(`${sel} .check-tag.sel`)].map(e=>e.dataset.v||e.textContent.trim()); }
+
+// ──────────────────────────────────────────────────────────────────────────
+// FIREBASE SETUP HELPERS (accesibles desde onclick en HTML)
+// ──────────────────────────────────────────────────────────────────────────
+window.guardarFBConfig = () => {
+  const cfg = {
+    apiKey:            (document.getElementById('fb-apiKey')?.value||'').trim(),
+    authDomain:        (document.getElementById('fb-authDomain')?.value||'').trim(),
+    projectId:         (document.getElementById('fb-projectId')?.value||'').trim(),
+    storageBucket:     (document.getElementById('fb-storageBucket')?.value||'').trim(),
+    messagingSenderId: (document.getElementById('fb-messagingSenderId')?.value||'').trim(),
+    appId:             (document.getElementById('fb-appId')?.value||'').trim(),
+  };
+  const errEl = document.getElementById('fb-setup-err');
+  if (!cfg.apiKey || !cfg.authDomain || !cfg.projectId) {
+    errEl.textContent = 'API Key, Auth Domain y Project ID son obligatorios.';
+    errEl.style.display = 'flex'; return;
+  }
+  try {
+    localStorage.setItem('vitalia_fb_config', JSON.stringify(cfg));
+    toast('¡Configuración guardada! Recargando...', 'success');
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) {
+    errEl.textContent = 'Error al guardar: ' + e.message;
+    errEl.style.display = 'flex';
+  }
+};
+
+window.pegarConfigJSON = async () => {
+  const raw = prompt('Pega aquí el objeto firebaseConfig completo (JSON o JS):');
+  if (!raw) return;
+  try {
+    // Support both JSON {"apiKey":"..."} and JS object literal apiKey: "..."
+    let cleaned = raw.trim();
+    if (!cleaned.startsWith('{')) cleaned = '{' + cleaned + '}';
+    // Convert JS object keys to JSON keys
+    cleaned = cleaned.replace(/(\w+)\s*:/g, '"$1":').replace(/'/g, '"');
+    const cfg = JSON.parse(cleaned);
+    if (!cfg.apiKey || !cfg.projectId) throw new Error('Faltan campos requeridos');
+    localStorage.setItem('vitalia_fb_config', JSON.stringify(cfg));
+    toast('Configuración detectada. Recargando...', 'success');
+    setTimeout(() => location.reload(), 1500);
+  } catch(e) {
+    alert('No se pudo leer el JSON. Asegúrate de pegar solo el contenido del objeto firebaseConfig.\n\nError: ' + e.message);
+  }
+};
+
+window.limpiarFBConfig = () => {
+  localStorage.removeItem('vitalia_fb_config');
+  location.reload();
+};
+
+// ──────────────────────────────────────────────────────────────────────────
+// GLOBALS (accesibles desde atributos onclick en HTML)
+// ──────────────────────────────────────────────────────────────────────────
+window.tTag=e=>e.classList.toggle('sel');
+window.closeModal=()=>el('modal').classList.remove('open');
+window.goTo=async s=>{
+  ['landing','login','onboarding','app','gobierno'].forEach(id=>el('s-'+id).style.display='none');
+  el('s-'+s).style.display='block';
+  if(s==='gobierno')cargarGobierno();
+};
+
+function show(id){const e=el(id);if(e)e.style.display='block';}
+function hide(id){const e=el(id);if(e)e.style.display='none';}
+function el(id){return document.getElementById(id);}
+function v(id){return(el(id)?.value||'').trim();}
+function showErr(e,m){if(e){e.textContent=m;e.style.display='flex';}}
+
+window.toast=(msg,type='info',dur=3200)=>{
+  const c=el('toast-wrap');const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  const ico={success:'ti-check',error:'ti-x',warn:'ti-alert-triangle',info:'ti-info-circle'};
+  t.innerHTML=`<i class="ti ${ico[type]||'ti-info-circle'}"></i>${msg}`;
+  c.appendChild(t); setTimeout(()=>t.remove(),dur);
+};
+
+function modoDemo(rol) {
+  // Fallback when Firebase is not configured
+  CUD={nombre:{adulto:'Carlos Mendoza',acompanante:'Ana García',proveedor:'Centro Activo',admin:'Administrador'}[rol],email:`${rol}@demo.com`,rol};
+  CU={uid:'demo-'+rol};
+  setupSidebar(); goTo('app');
+  const fp={adulto:'inicio',acompanante:'resumen-ac',proveedor:'dashboard-pr',admin:'dashboard-adm'};
+  showPage(fp[rol]||'inicio');
+}
+</script>
+</body>
+</html>
